@@ -1,10 +1,20 @@
 ## dart config file with struct formats.
 
-String? , List, Map
-@include, @if, @end, @null, @empty 
-.@add, .@remove, .1, .2, .3
-@"this is raw string"
-$host: @remove
+instructs:
+    @include
+    @if
+    @end
+
+key:
+    String
+    $referenced path,   $person.name, $list.0
+
+value:
+    String? , List, Map
+    @null
+    @empty
+    @remove
+ 
 
 ```
 @include: default.config

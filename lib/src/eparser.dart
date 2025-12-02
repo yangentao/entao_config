@@ -49,25 +49,36 @@ class _EParser {
   void _assignMap(EMap emap, String key, dynamic value) {
     println("assign, ", key, value);
     String firstChar = key[0];
-    if (firstChar == r"$") {
+    if (firstChar == "@") {
+      // todo
+    } else if (firstChar == r"$") {
       String newKey = key.substring(1);
       switch (value) {
         case "@null":
           emap.setPath(newKey, nullValue);
+        case "@empty":
+          emap.setPath(newKey, "");
         case "@remove":
-          println("remove ", key);
           emap.removePath(newKey);
         default:
           emap.setPath(newKey, value);
       }
-    } else if (firstChar == "@") {
     } else {
-      emap[key] = value;
+      switch (value) {
+        case "@null":
+          emap[key] = nullValue;
+        case "@empty":
+          emap[key] = "";
+        case "@remove":
+          emap.remove(key);
+        default:
+          emap[key] = value;
+      }
     }
   }
 
   String _parseKey() {
-    List<int> charList = ts.moveNext(acceptor: (e) => CharCode.isIdent(e) || e == CharCode.DOT || e == CharCode.DOLLAR || e == CharCode.AT);
+    List<int> charList = ts.moveNext(acceptor: (e) => CharCode.isIdent(e) || e == CharCode.DOT || e == CharCode.DOLLAR || e == CharCode.AT || e == CharCode.MINUS);
     if (charList.isEmpty) _raise();
     return String.fromCharCodes(charList);
   }
@@ -132,12 +143,6 @@ class _EParser {
     return list;
   }
 
-  // @xxx
-  String _parseAt() {
-    ts.expectChar(CharCode.AT);
-    List<int> buf = ts.moveNext(acceptor: (e) => CharCode.isAlpha(e));
-    return String.fromCharCodes(buf);
-  }
 
   String _parseAtValue() {
     List<int> buf = ts.moveNext(acceptor: (e) => ts.matched.isEmpty ? e == CharCode.AT : CharCode.isAlpha(e));

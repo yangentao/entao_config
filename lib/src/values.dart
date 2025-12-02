@@ -118,6 +118,8 @@ class EList extends EValue with Iterable<EValue> {
           }
           data.add(_toEValue(value));
         }
+      } else if (index == -1) {
+        data.add(_toEValue(value));
       }
     }
   }
