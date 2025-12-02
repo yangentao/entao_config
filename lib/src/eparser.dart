@@ -45,6 +45,11 @@ class _EParser {
           } else if (ts.peek("@end")) {
             ts.skip(size: 4);
             continue;
+          } else if (ts.peek("@else")) {
+            ts.skip(size: 5);
+            ts.moveUntilString("@end", escapeChar: CharCode.BSLASH);
+            ts.skip(size: 4);
+            continue;
           } else {
             key = _parseKey();
           }
@@ -77,8 +82,11 @@ class _EParser {
     EValue ev = emap.path(key);
     bool result = ev.equal(value);
     if (!result) {
-      ts.moveUntilString("@end", escapeChar: CharCode.BSLASH);
-      if (ts.notEnd) ts.skip(size: 4);
+      int n = ts.moveUntilAnyString(const ["@else", "@end"], escapeChar: CharCode.BSLASH);
+      if (n < 0) {
+        raise("@if but no @else or @end");
+      }
+      if (ts.notEnd) ts.skip(size: n == 0 ? 5 : 4);
     }
   }
 
