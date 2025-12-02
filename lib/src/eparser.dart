@@ -181,7 +181,6 @@ class _EParser {
   }
 
   void _ifProcess(EMap emap, String key, String op, dynamic value) {
-    println(key, op, value);
     if (key.startsWith(r"$")) key = key.substring(1);
     EValue ev = emap.path(key);
     bool result = false;
@@ -349,7 +348,7 @@ class _EParser {
     List<int> charList = ts.moveUntil(untilSet, escapeChar: CharCode.BSLASH);
     if (charList.isEmpty) return "";
     String s = _codesToString(charList);
-    return s;
+    return s.trim();
   }
 
   Never _raise([String msg = "Parse Error"]) {
