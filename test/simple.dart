@@ -40,6 +40,12 @@ void main() {
       // Additional setup goes here.
     });
 
+    test('t0', () {
+      EMap map = EConfig.parse("");
+      println(map.toString());
+      println(map.toFileContent());
+    });
+
     test('t1', () {
       EMap map = EConfig.parse(text);
       println(map.toFileContent());
