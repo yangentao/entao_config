@@ -4,6 +4,20 @@ class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
   final Map<String, EValue> data = {};
 
   @override
+  EValue operator [](Object key) {
+    return data[key.toString()] ?? ENull.inst;
+  }
+
+  @override
+  void operator []=(Object key, Object? value) {
+    if (value == null) {
+      data.remove(key.toString());
+    } else {
+      data[key.toString()] = _toEnValue(value);
+    }
+  }
+
+  @override
   Iterator<MapEntry<String, EValue>> get iterator => data.entries.iterator;
 
   @override
@@ -14,11 +28,10 @@ class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
     buf.brace(() {
       bool first = true;
       for (var e in data.entries) {
-        if (first) {
-          first = false;
-        } else {
+        if (!first) {
           buf.write(", ");
         }
+        first = false;
         if (pretty) buf.indentLine;
         buf.write(e.key);
         buf.write(":");
@@ -30,6 +43,26 @@ class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
 
 class EList extends EValue with Iterable<EValue> {
   List<EValue> data = [];
+
+  @override
+  EValue operator [](Object key) {
+    return data.getOr(_intKey(key)) ?? ENull.inst;
+  }
+
+  @override
+  void operator []=(Object key, Object? value) {
+    int index = _intKey(key);
+    if (index >= 0) {
+      if (index < data.length) {
+        data[index] = _toEnValue(value);
+      } else {
+        for (int i = data.length; i < index; ++i) {
+          data.add(nullValue);
+        }
+        data.add(_toEnValue(value));
+      }
+    }
+  }
 
   @override
   Iterator<EValue> get iterator => data.iterator;
@@ -45,9 +78,20 @@ class EList extends EValue with Iterable<EValue> {
       for (var e in data) {
         if (!first) buf.write(", ");
         first = false;
-        e.serializeTo(buf, pretty: p);
+        switch (e) {
+          case ENull en:
+            if (p) buf.indentLine;
+            en.serializeTo(buf, pretty: p);
+          case EString es:
+            if (p) buf.indentLine;
+            es.serializeTo(buf, pretty: p);
+          case EList el:
+            el.serializeTo(buf, pretty: p);
+          case EMap em:
+            em.serializeTo(buf, pretty: p);
+        }
       }
-    }, indent: pretty);
+    }, indent: p);
   }
 }
 
@@ -57,18 +101,26 @@ class EString extends EValue implements Comparable<String> {
   EString(this.data);
 
   @override
+  EValue operator [](Object key) {
+    int index = _intKey(key);
+    return EString(data[index]);
+  }
+
+  @override
+  void operator []=(Object key, Object? value) {
+    raise("String value not support edit");
+  }
+
+  @override
   String toString() {
     return data;
   }
 
   @override
   void serializeTo(IndentBuffer buf, {bool pretty = false}) {
-    if (pretty) {
-      buf.indentLine;
-    }
-    buf.writeCharCode(CharCode.QUOTE);
-    buf << escapeText(data, map: const {CharCode.BSLASH: CharCode.BSLASH, CharCode.QUOTE: CharCode.QUOTE, CharCode.SQUOTE: CharCode.SQUOTE});
-    buf.writeCharCode(CharCode.QUOTE);
+    // buf.writeCharCode(CharCode.QUOTE);
+    buf << escapeText(data, map: _stringEscapes);
+    // buf.writeCharCode(CharCode.QUOTE);
   }
 
   @override
@@ -80,7 +132,48 @@ class EString extends EValue implements Comparable<String> {
   int get estimatedSize => data.length;
 }
 
+final ENull nullValue = ENull.inst;
+
+class ENull extends EValue {
+  ENull._();
+
+  static ENull inst = ENull._();
+
+  @override
+  EValue operator [](Object key) {
+    return this;
+  }
+
+  @override
+  void operator []=(Object key, Object? value) {}
+
+  @override
+  int get estimatedSize => 5;
+
+  @override
+  void serializeTo(IndentBuffer buf, {bool pretty = false}) {
+    buf << "@null";
+  }
+}
+
 sealed class EValue {
+  bool get isNull => this is ENull;
+
+  String get asString {
+    if (this case EString es) return es.data;
+    raise("NOT a string");
+  }
+
+  EList get asList {
+    if (this case EList ls) return ls;
+    raise("NOT a list");
+  }
+
+  EMap get asMap {
+    if (this case EMap m) return m;
+    raise("NOT a map");
+  }
+
   int get estimatedSize;
 
   String serialize({bool pretty = false}) {
@@ -90,6 +183,10 @@ sealed class EValue {
   }
 
   void serializeTo(IndentBuffer buf, {bool pretty = false});
+
+  EValue operator [](Object key);
+
+  void operator []=(Object key, Object? value);
 
   @override
   String toString() {
@@ -102,14 +199,7 @@ sealed class EValue {
 
   EValue paths(List<String> path) {
     if (path.isEmpty) return this;
-    switch (this) {
-      case EMap ymap:
-        return ymap[path.first].paths(path.sublist(1));
-      case EList yList:
-        return yList[path.first.toInt!].paths(path.sublist(1));
-      default:
-        return raise("invalid path: ${path.join(_SEP)}");
-    }
+    return this[path.first].paths(path.sublist(1));
   }
 
   bool setPath(String path, Object value) {
@@ -119,57 +209,44 @@ sealed class EValue {
   bool setPaths(List<String> paths, Object value) {
     if (paths.isEmpty) return false;
     if (paths.length == 1) {
-      // this[paths.first] = _toEnValue(value);
+      this[paths.first] = _toEnValue(value);
       return true;
-    }
-    EValue v = this[paths.first];
-    if (v is EnNull) {
-      if (this is EMap) {
-        this[paths.first] = EMap(); //auto create
-      }
     }
     return this[paths.first].setPaths(paths.sublist(1), value);
   }
+}
 
-  EValue operator [](Object key) {
-    // switch (this) {
-    //   case EMap em:
-    //     return em.data[key.toString()]!;
-    //   case EList el:
-    //     if (key is int) {
-    //       return el.data[key];
-    //     } else if (key is String) {
-    //       int? idx = key.toInt;
-    //       if (idx != null) {
-    //         return el.data[idx];
-    //       }
-    //     }
-    // }
-    raise("null");
+EValue _toEnValue(Object? value) {
+  switch (value) {
+    case null:
+      return nullValue;
+    case num n:
+      return EString(n.toString());
+    case String s:
+      return EString(s);
+    case List<dynamic> ls:
+      final el = EList();
+      el.data.addAll(ls.map((e) => _toEnValue(e)));
+      return el;
+    case Map<String, dynamic> map:
+      final em = EMap();
+      for (final p in map.entries) {
+        em[p.key] = _toEnValue(p.value);
+      }
+      return em;
+    default:
+      raise("Unknown value: $value");
   }
+}
 
-  void operator []=(Object key, Object? value) {
-    switch (this) {
-      case EMap em:
-        String kk = key.toString();
-        if (value == null) {
-          em.data.remove(kk);
-        } else {
-          // em.data[kk] = _toEnValue(value);
-        }
-      case EList el:
-        int? idx = key is int ? key : (key is String ? key.toInt : null);
-        if (idx == null) raise("index error: $key");
-        if (value == null) {
-          // el.data[idx] = EnNull.inst;
-        } else {
-          // el.data[idx] = _toEnValue(value);
-        }
-
-      default:
-        throw Exception("Unknown type: $value");
-    }
+int _intKey(Object key) {
+  if (key is int) {
+    return key;
   }
+  if (key is String) {
+    return key.toInt ?? raise("message");
+  }
+  raise("key is not int value");
 }
 
 final String _SEP = ".";
@@ -182,3 +259,5 @@ extension _StringBufferExt on StringBuffer {
     return this;
   }
 }
+
+Map<int, int> _stringEscapes = const {CharCode.BSLASH: CharCode.BSLASH, CharCode.QUOTE: CharCode.QUOTE, CharCode.SQUOTE: CharCode.SQUOTE};

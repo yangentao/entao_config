@@ -1,13 +1,15 @@
 ## dart config file with struct formats.
 
 String? , List, Map
+@include, @if, @end, @null, @empty 
+.@add, .@remove, .@1, .@2, .@3
 
 ```
 @include: default.config
 @include: "u s e r.config"
 @include: {
-    keys:[host,port,user]
     from: user.config
+    keys:[host,port,user]
 }
 
 host: https://pub.dev
@@ -16,7 +18,8 @@ port= 443
 account: {
     user:jerry
     pwd: xxx
-    }
+}
+
 $account.token: xxxxx
 userName: $account.user
 
