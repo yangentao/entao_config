@@ -7,7 +7,7 @@ void main() {
     final String text = r"""
     methods: [GET,POST,HEAD]
     port: 80
-    @if port = 80
+    @if port != 80
       $methods.-1 = PUT
     @else 
       $methods.-1 = DELETE

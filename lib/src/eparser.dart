@@ -31,24 +31,31 @@ class _EParser {
     while (!_isObjectEnd(root)) {
       ts.skipWhites();
       if (ts.isEnd) break;
-      bool atIf = false;
       String key;
       switch (ts.currentChar) {
         case CharCode.QUOTE:
           key = _parseStringQuoted();
         case CharCode.AT:
           if (ts.peek("@if ")) {
-            atIf = true;
             ts.skip(size: 4);
             ts.skipSpTab();
             key = _parseKey();
+            ts.skipSpTab();
+            List<String> opList = const [">=", "<=", "!=", "=", ">", "<"];
+            int index = ts.expectAnyString(opList);
+            dynamic v = _parseValue();
+            _ifProcess(map, key, opList[index], v);
+            continue;
           } else if (ts.peek("@end")) {
             ts.skip(size: 4);
+            if (ts.notEnd) ts.expectAnyChar(CharCode.SP_TAB_CR_LF);
             continue;
           } else if (ts.peek("@else")) {
             ts.skip(size: 5);
+            ts.expectAnyChar(CharCode.SP_TAB_CR_LF);
             ts.moveUntilString("@end", escapeChar: CharCode.BSLASH);
             ts.skip(size: 4);
+            if (ts.notEnd) ts.expectAnyChar(CharCode.SP_TAB_CR_LF);
             continue;
           } else {
             key = _parseKey();
@@ -60,11 +67,7 @@ class _EParser {
       ts.skipSpTab();
       ts.expectAnyChar(_ASSIGN);
       dynamic v = _parseValue();
-      if (atIf) {
-        _ifProcess(map, key, "=", v);
-      } else {
-        _assignMap(map, key, v);
-      }
+      _assignMap(map, key, v);
       List<int> trails = ts.skipChars(_WHITE_COMMA);
       if (!_isObjectEnd(root)) {
         if (trails.intersect(_LN_COMMA).isEmpty) _raise();
@@ -77,16 +80,80 @@ class _EParser {
     return map;
   }
 
+  bool _cmpString(EValue ev, String op, dynamic value) {
+    if (ev is! EString) return false;
+    if (value is! String) return false;
+    String s1 = ev.data;
+    String s2 = value;
+    if (s1.allNum && s2.allNum) {
+      if (s1.contains(".") || s2.contains(".")) {
+        double? d1 = s1.toDouble;
+        double? d2 = s2.toDouble;
+        if (d1 != null && d2 != null) {
+          switch (op) {
+            case ">=":
+              return d1 >= d2;
+            case "<=":
+              return d1 <= d2;
+            case ">":
+              return d1 > d2;
+            case "<":
+              return d1 < d2;
+          }
+        }
+      } else {
+        int? n1 = s1.toInt;
+        int? n2 = s2.toInt;
+        if (n1 != null && n2 != null) {
+          switch (op) {
+            case ">=":
+              return n1 >= n2;
+            case "<=":
+              return n1 <= n2;
+            case ">":
+              return n1 > n2;
+            case "<":
+              return n1 < n2;
+          }
+        }
+      }
+    }
+    switch (op) {
+      case ">=":
+        return s1.compareTo(s2) >= 0;
+      case "<=":
+        return s1.compareTo(s2) <= 0;
+      case ">":
+        return s1.compareTo(s2) > 0;
+      case "<":
+        return s1.compareTo(s2) < 0;
+    }
+    raise("Unsupport operator: $op");
+  }
+
   void _ifProcess(EMap emap, String key, String op, dynamic value) {
+    println(key, op, value);
     if (key.startsWith(r"$")) key = key.substring(1);
     EValue ev = emap.path(key);
-    bool result = ev.equal(value);
+    bool result = false;
+    switch (op) {
+      case "=":
+        result = ev.equal(value);
+      case "!=":
+        result = !ev.equal(value);
+      default:
+        result = _cmpString(ev, op, value);
+    }
+
     if (!result) {
       int n = ts.moveUntilAnyString(const ["@else", "@end"], escapeChar: CharCode.BSLASH);
       if (n < 0) {
         raise("@if but no @else or @end");
       }
-      if (ts.notEnd) ts.skip(size: n == 0 ? 5 : 4);
+      ts.skip(size: n == 0 ? 5 : 4);
+      if (ts.notEnd) {
+        ts.expectAnyChar(CharCode.SP_TAB_CR_LF);
+      }
     }
   }
 
@@ -263,3 +330,16 @@ const Map<int, int> _unescapeChars = {
   CharCode.RSQB: CharCode.RSQB,
   CharCode.AT: CharCode.AT,
 };
+
+extension _StringIsNumExt on String {
+  bool get allNum {
+    for (int c in this.codeUnits) {
+      if (!_isNum(c)) return false;
+    }
+    return true;
+  }
+}
+
+bool _isNum(int c) {
+  return CharCode.isNum(c) || c == CharCode.DOT || c == CharCode.MINUS || c == CharCode.PLUS || c == CharCode.e || c == CharCode.E;
+}
