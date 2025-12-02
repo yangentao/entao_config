@@ -13,16 +13,28 @@ class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
 
   @override
   EValue operator [](Object key) {
-    return data[key.toString()] ?? nullValue;
+    String k = key.toString();
+    if (k.contains(".")) return path(k);
+    return data[k] ?? nullValue;
   }
 
   @override
   void operator []=(Object key, Object? value) {
-    if (value == null) {
-      data.remove(key.toString());
+    String k = key.toString();
+    if (k.contains(".")) {
+      setPath(k, value);
     } else {
-      data[key.toString()] = _toEValue(value);
+      if (value == null) {
+        data.remove(key.toString());
+      } else {
+        data[key.toString()] = _toEValue(value);
+      }
     }
+  }
+
+  @override
+  bool remove(Object key) {
+    return null != data.remove(key.toString());
   }
 
   @override
@@ -85,22 +97,35 @@ class EList extends EValue with Iterable<EValue> {
 
   @override
   EValue operator [](Object key) {
+    String k = key.toString();
+    if (k.contains(".")) return path(k);
     return data.getOr(_intKey(key)) ?? nullValue;
   }
 
   @override
   void operator []=(Object key, Object? value) {
-    int index = _intKey(key);
-    if (index >= 0) {
-      if (index < data.length) {
-        data[index] = _toEValue(value);
-      } else {
-        for (int i = data.length; i < index; ++i) {
-          data.add(nullValue);
+    String k = key.toString();
+    if (k.contains(".")) {
+      setPath(k, value);
+    } else {
+      int index = _intKey(key);
+      if (index >= 0) {
+        if (index < data.length) {
+          data[index] = _toEValue(value);
+        } else {
+          for (int i = data.length; i < index; ++i) {
+            data.add(nullValue);
+          }
+          data.add(_toEValue(value));
         }
-        data.add(_toEValue(value));
       }
     }
+  }
+
+  @override
+  bool remove(Object key) {
+    data.removeAt(_intKey(key));
+    return true;
   }
 
   @override
@@ -131,6 +156,8 @@ class EString extends EValue implements Comparable<String> {
 
   @override
   EValue operator [](Object key) {
+    String k = key.toString();
+    if (k.contains(".")) return path(k);
     int index = _intKey(key);
     return EString(data[index]);
   }
@@ -138,6 +165,11 @@ class EString extends EValue implements Comparable<String> {
   @override
   void operator []=(Object key, Object? value) {
     raise("String value not support edit");
+  }
+
+  @override
+  bool remove(Object key) {
+    raise("String value no support remove");
   }
 
   @override
@@ -171,6 +203,9 @@ class ENull extends EValue {
 
   @override
   void operator []=(Object key, Object? value) {}
+
+  @override
+  bool remove(Object key) => false;
 
   @override
   int get _estimatedSize => 5;
@@ -236,6 +271,8 @@ sealed class EValue {
 
   void operator []=(Object key, Object? value);
 
+  bool remove(Object key);
+
   @override
   String toString() {
     return serialize(pretty: false);
@@ -250,17 +287,30 @@ sealed class EValue {
     return this[path.first].paths(path.sublist(1));
   }
 
-  bool setPath(String path, Object value) {
+  bool setPath(String path, Object? value) {
     return setPaths(path.split(_SEP).map((e) => e.trim()).toList(), value);
   }
 
-  bool setPaths(List<String> paths, Object value) {
+  bool setPaths(List<String> paths, Object? value) {
     if (paths.isEmpty) return false;
     if (paths.length == 1) {
       this[paths.first] = _toEValue(value);
       return true;
     }
     return this[paths.first].setPaths(paths.sublist(1), value);
+  }
+
+  bool removePath(String path) {
+    return removePaths(path.split(_SEP).map((e) => e.trim()).toList());
+  }
+
+  bool removePaths(List<String> paths) {
+    if (paths.isEmpty) return false;
+    if (paths.length == 1) {
+      return remove(paths.first);
+    } else {
+      return this.paths(paths.sublist(0, paths.length - 1)).remove(paths.last);
+    }
   }
 }
 

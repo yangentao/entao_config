@@ -2,8 +2,9 @@
 
 String? , List, Map
 @include, @if, @end, @null, @empty 
-.@add, .@remove, .@1, .@2, .@3
+.@add, .@remove, .1, .2, .3
 @"this is raw string"
+$host: @remove
 
 ```
 @include: default.config
@@ -31,8 +32,9 @@ action: $methods.0
 $methods.2= PUT
 @end
 
-$methods.@3= HEAD
-$methods.@add: delete
+$methods.3= HEAD
+$methods.3= @null
+$methods.-1: DELETE
 $methods.@remove: delete
 newMethods = $methods.copy
 

@@ -21,40 +21,55 @@ class _EParser {
     while (ts.notEnd) {
       ts.skipWhites();
       if (ts.isEnd) break;
-      if (ts.currentChar == CharCode.AT) {
-        _parseAt();
-        // TODO @xxx
-      } else {
-        String key = ts.currentChar == CharCode.QUOTE ? _parseStringQuoted() : _parseKey();
-        ts.skipSpTab();
-        ts.expectAnyChar(_ASSIGN);
-        dynamic v = _parseValue();
-        map[key] = v;
-        List<int> trails = ts.skipChars(_WHITE_COMMA);
-        if (ts.notEnd) {
-          if (trails.intersect(_LN_COMMA).isEmpty) _raise();
-        }
+      String key;
+      int ch = ts.currentChar;
+      switch (ch) {
+        case CharCode.AT:
+          key = _parseKey();
+        case CharCode.DOLLAR:
+          key = _parseKey();
+        case CharCode.QUOTE:
+          key = _parseStringQuoted();
+        default:
+          key = _parseKey();
+      }
+      ts.skipSpTab();
+      ts.expectAnyChar(_ASSIGN);
+      dynamic v = _parseValue();
+      _assignMap(map, key, v);
+      List<int> trails = ts.skipChars(_WHITE_COMMA);
+      if (ts.notEnd) {
+        if (trails.intersect(_LN_COMMA).isEmpty) _raise();
       }
     }
     scope.pop();
     return map;
   }
 
-  dynamic _parseValue() {
-    ts.skipSpTab();
-    if (ts.isEnd) return null;
-    switch (ts.currentChar) {
-      case CharCode.LCUB:
-        return parseObject();
-      case CharCode.LSQB:
-        return parseArray();
-      case CharCode.AT:
-        return _parseAtValue();
-      case CharCode.QUOTE:
-        return _parseStringQuoted();
-      default:
-        return _parseString();
+  void _assignMap(EMap emap, String key, dynamic value) {
+    println("assign, ", key, value);
+    String firstChar = key[0];
+    if (firstChar == r"$") {
+      String newKey = key.substring(1);
+      switch (value) {
+        case "@null":
+          emap.setPath(newKey, nullValue);
+        case "@remove":
+          println("remove ", key);
+          emap.removePath(newKey);
+        default:
+          emap.setPath(newKey, value);
+      }
+    } else if (firstChar == "@") {
+    } else {
+      emap[key] = value;
     }
+  }
+
+  String _parseKey() {
+    List<int> charList = ts.moveNext(acceptor: (e) => CharCode.isIdent(e) || e == CharCode.DOT || e == CharCode.DOLLAR || e == CharCode.AT);
+    if (charList.isEmpty) _raise();
+    return String.fromCharCodes(charList);
   }
 
   EMap parseObject() {
@@ -79,6 +94,23 @@ class _EParser {
     ts.expectChar(CharCode.RCUB);
     scope.pop();
     return map;
+  }
+
+  dynamic _parseValue() {
+    ts.skipSpTab();
+    if (ts.isEnd) return null;
+    switch (ts.currentChar) {
+      case CharCode.LCUB:
+        return parseObject();
+      case CharCode.LSQB:
+        return parseArray();
+      case CharCode.AT:
+        return _parseAtValue();
+      case CharCode.QUOTE:
+        return _parseStringQuoted();
+      default:
+        return _parseString();
+    }
   }
 
   EList parseArray() {
@@ -108,15 +140,8 @@ class _EParser {
   }
 
   String _parseAtValue() {
-    ts.expectChar(CharCode.AT);
-    List<int> buf = ts.moveNext(acceptor: (e) => CharCode.isAlpha(e));
+    List<int> buf = ts.moveNext(acceptor: (e) => ts.matched.isEmpty ? e == CharCode.AT : CharCode.isAlpha(e));
     return String.fromCharCodes(buf);
-  }
-
-  String _parseKey() {
-    List<int> charList = ts.moveNext(acceptor: (e) => ts.matched.isEmpty ? (CharCode.isAlpha(e) || e == CharCode.LOWBAR) : (CharCode.isIdent(e) || e == CharCode.DOT));
-    if (charList.isEmpty) _raise();
-    return String.fromCharCodes(charList);
   }
 
   String _parseStringQuoted() {
