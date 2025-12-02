@@ -34,7 +34,7 @@ class _EParser {
   }
 
   dynamic _parseValue() {
-    ts.skipWhites();
+    ts.skipSpTab();
     if (ts.isEnd) return null;
     switch (ts.currentChar) {
       case CharCode.LCUB:
@@ -118,6 +118,7 @@ class _EParser {
 
   String _parseString() {
     List<int> charList = ts.moveUntil(_STR_STOP, escapeChar: CharCode.BSLASH);
+    if (charList.isEmpty) return "";
     String s = _codesToString(charList);
     return s;
   }

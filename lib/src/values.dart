@@ -184,11 +184,18 @@ class ENull extends EValue {
 sealed class EValue {
   bool get isNull => this is ENull;
 
-  List<String> get listString {
+  Map<String, String> get stringMap {
+    if (this case EMap em) {
+      return em.data.map((k, v) => MapEntry(k, (v as EString).data));
+    }
+    raise("NOT a map");
+  }
+
+  List<String> get stringList {
     if (this case EList el) {
       return el.data.mapList((e) => (e as EString).data);
     }
-    raise("NOT a Strign list");
+    raise("NOT a String list");
   }
 
   bool get boolValue {
