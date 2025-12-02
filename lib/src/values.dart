@@ -7,38 +7,24 @@ class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
   Iterator<MapEntry<String, EValue>> get iterator => data.entries.iterator;
 
   @override
-  void serializeTo(StringBuffer buf) {
-    buf.write("{");
-    bool first = true;
-    for (var e in data.entries) {
-      if (first) {
-        first = false;
-      } else {
-        buf.write(", ");
-      }
-      buf.write(e.key);
-      buf.write(":");
-      e.value.serializeTo(buf);
-    }
-    buf.write("}");
-  }
+  int get estimatedSize => this.sumValueBy((e) => e.key.length + e.value.estimatedSize + 1) ?? 2;
 
   @override
-  void serializePretty(StringBuffer buf, int ident) {
-    buf.write("{");
-    if (data.isEmpty) {
-      buf.write("}");
-      return;
-    }
-    buf.writeCharCode(CharCode.LF);
-    for (var e in data.entries) {
-      buf.space(ident + 1).write(e.key);
-      buf.write(":");
-      e.value.serializePretty(buf, ident + 1);
-      buf.writeCharCode(CharCode.LF);
-    }
-    buf.space(ident);
-    buf.write("}");
+  void serializeTo(IndentBuffer buf, {bool pretty = false}) {
+    buf.brace(() {
+      bool first = true;
+      for (var e in data.entries) {
+        if (first) {
+          first = false;
+        } else {
+          buf.write(", ");
+        }
+        if (pretty) buf.indentLine;
+        buf.write(e.key);
+        buf.write(":");
+        e.value.serializeTo(buf, pretty: pretty);
+      }
+    }, indent: pretty);
   }
 }
 
@@ -49,30 +35,19 @@ class EList extends EValue with Iterable<EValue> {
   Iterator<EValue> get iterator => data.iterator;
 
   @override
-  void serializeTo(StringBuffer buf) {
-    buf.writeCharCode(CharCode.LSQB);
-    bool first = true;
-    for (var e in data) {
-      if (!first) buf.write(", ");
-      first = false;
-      e.serializeTo(buf);
-    }
-    buf.writeCharCode(CharCode.RSQB);
-  }
+  int get estimatedSize => this.sumValueBy((e) => e.estimatedSize) ?? 2;
 
   @override
-  void serializePretty(StringBuffer buf, int ident) {
-    // buf.writeCharCode(CharCode.LSQB);
-    // bool needIdent = data.firstOrNull is EList || data.firstOrNull is EMap;
-    // bool first = true;
-    // for (var e in data) {
-    //   if (!first) buf.write(", ");
-    //   first = false;
-    //   if (needIdent) buf.space(ident);
-    //   e.serializePretty(buf, ident + 1);
-    // }
-    // if (needIdent) buf.space(ident);
-    // buf.writeCharCode(CharCode.RSQB);
+  void serializeTo(IndentBuffer buf, {bool pretty = false}) {
+    bool p = pretty && (this.estimatedSize > 80 || any((e) => e is EMap));
+    buf.bracket(() {
+      bool first = true;
+      for (var e in data) {
+        if (!first) buf.write(", ");
+        first = false;
+        e.serializeTo(buf, pretty: p);
+      }
+    }, indent: pretty);
   }
 }
 
@@ -87,42 +62,34 @@ class EString extends EValue implements Comparable<String> {
   }
 
   @override
-  void serializeTo(StringBuffer buf) {
-    buf.writeCharCode(CharCode.QUOTE);
-    for (var ch in data.codeUnits) {
-      if (ch == CharCode.QUOTE) {
-        buf.writeCharCode(CharCode.BSLASH);
-      }
-      buf.writeCharCode(ch);
+  void serializeTo(IndentBuffer buf, {bool pretty = false}) {
+    if (pretty) {
+      buf.indentLine;
     }
     buf.writeCharCode(CharCode.QUOTE);
-  }
-
-  @override
-  void serializePretty(StringBuffer buf, int ident) {
-    serializeTo(buf);
+    buf << escapeText(data, map: const {CharCode.BSLASH: CharCode.BSLASH, CharCode.QUOTE: CharCode.QUOTE, CharCode.SQUOTE: CharCode.SQUOTE});
+    buf.writeCharCode(CharCode.QUOTE);
   }
 
   @override
   int compareTo(String other) {
     return data.compareTo(other);
   }
+
+  @override
+  int get estimatedSize => data.length;
 }
 
 sealed class EValue {
+  int get estimatedSize;
+
   String serialize({bool pretty = false}) {
-    var buf = StringBuffer();
-    if (pretty) {
-      serializePretty(buf, 0);
-    } else {
-      serializeTo(buf);
-    }
+    var buf = IndentBuffer();
+    serializeTo(buf, pretty: pretty);
     return buf.toString();
   }
 
-  void serializeTo(StringBuffer buf);
-
-  void serializePretty(StringBuffer buf, int ident);
+  void serializeTo(IndentBuffer buf, {bool pretty = false});
 
   @override
   String toString() {

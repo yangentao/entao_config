@@ -6,17 +6,29 @@ class IndentBuffer {
 
   IndentBuffer([this._indent = 0]);
 
-  IndentBuffer brace(VoidCallback callback) {
-    push("{");
-    callback();
-    pop("}");
+  IndentBuffer brace(VoidCallback callback, {required bool indent}) {
+    if (indent == true) {
+      push("{");
+      callback();
+      pop("}");
+    } else {
+      write("{");
+      callback();
+      write("}");
+    }
     return this;
   }
 
-  IndentBuffer bracket(VoidCallback callback) {
-    push("[");
-    callback();
-    pop("]");
+  IndentBuffer bracket(VoidCallback callback, {required bool indent}) {
+    if (indent == true) {
+      push("[");
+      callback();
+      pop("]");
+    } else {
+      write("[");
+      callback();
+      write("]");
+    }
     return this;
   }
 

@@ -8,8 +8,8 @@ void main() {
     buf.indentLine.write("values:").bracket(() {
       buf.indentLine.write("A");
       buf.indentLine.write("B");
-    });
-  });
+    }, indent: true);
+  }, indent: true);
   buf.indentLine.write("port: 80");
 
   print(buf.toString());
