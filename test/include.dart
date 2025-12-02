@@ -6,7 +6,7 @@ void main() {
   group('include', () {
     final String text = r"""
     methods: [GET,POST,HEAD]
-    @include: b.txt
+    @include: a.txt
     """;
 
     setUp(() {

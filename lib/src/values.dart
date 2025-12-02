@@ -221,42 +221,45 @@ class ENull extends EValue {
 sealed class EValue {
   bool get isNull => this is ENull;
 
-  Map<String, String> get stringMap {
+  Map<String, String>? get stringMap {
     if (this case EMap em) {
       return em.data.map((k, v) => MapEntry(k, (v as EString).data));
     }
-    raise("NOT a map");
+    // raise("NOT a map");
+    return null;
   }
 
-  List<String> get stringList {
+  List<String>? get stringList {
     if (this case EList el) {
       return el.data.mapList((e) => (e as EString).data);
     }
-    raise("NOT a String list");
+    return null;
+    // raise("NOT a String list");
   }
 
-  bool get boolValue {
-    return _trues.contains(stringValue.toLowerCase());
+  bool? get boolValue {
+    String? s = stringValue;
+    if (s != null && s.isNotEmpty) return _trues.contains(s.toLowerCase());
+    return null;
   }
 
-  int? get intValue => stringValue.toInt;
+  int? get intValue => stringValue?.toInt;
 
-  double? get doubleValue => stringValue.toDouble;
+  double? get doubleValue => stringValue?.toDouble;
 
-  String get stringValue {
+  String? get stringValue {
     if (this case EString es) return es.data;
-    if (this is ENull) return "";
-    raise("NOT a string");
+    return null;
   }
 
-  EList get listValue {
+  EList? get listValue {
     if (this case EList ls) return ls;
-    raise("NOT a list");
+    return null;
   }
 
-  EMap get mapValue {
+  EMap? get mapValue {
     if (this case EMap m) return m;
-    raise("NOT a map");
+    return null;
   }
 
   int get _estimatedSize;

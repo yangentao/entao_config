@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:entao_config/src/IndentBuffer.dart';
 import 'package:entao_config/src/Stack.dart';
 import 'package:entao_dutil/entao_dutil.dart';
-import 'package:path/path.dart' as p;
+import 'package:path/path.dart' as pathUtil;
 import 'package:println/println.dart';
 
 part 'eparser.dart';
@@ -16,7 +16,7 @@ class EConfig {
 
   static EMap parseFile(File file, {Encoding encoding = utf8}) {
     String s = file.readAsStringSync(encoding: encoding);
-    return _EParser(s, currentDir: p.dirname(file.path)).parse();
+    return _EParser(s, currentDir: pathUtil.dirname(file.path)).parse();
   }
 
   static EMap parse(String text, {String? currentDir}) {

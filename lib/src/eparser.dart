@@ -53,12 +53,45 @@ class _EParser {
     return ts.isEnd || ts.nowChar == CharCode.RCUB;
   }
 
+  File? _includeFile(String name) {
+    if (name.isEmpty) return null;
+    if (pathUtil.isAbsolute(name)) return File(name);
+    if (currentDir == null || currentDir!.isEmpty) return File(name);
+    return File(pathUtil.join(currentDir!, name));
+  }
+
   void _assignMap(EMap emap, String key, dynamic value) {
     println("assign, ", key, value);
     String firstChar = key[0];
     if (firstChar == "@") {
       if (key == "@include") {
-        println("include file :", value);
+        if (value case String s) {
+          File? file = _includeFile(s.trim());
+          if (file != null) {
+            EMap inMap = EConfig.parseFile(file);
+            emap.data.addAll(inMap.data);
+          }
+        } else if (value case EMap em) {
+          String? filename = em['file'].stringValue;
+          if (filename == null) return;
+          File? file = _includeFile(filename);
+          if (file != null) {
+            String? charset = em['charset'].stringValue;
+            EMap inMap = EConfig.parseFile(file, encoding: charset != null ? (Encoding.getByName(charset) ?? utf8) : utf8);
+            List<String>? keys = em['keys'].stringList;
+            List<String>? excludes = em['excludes'].stringList;
+            Set<String> keySet = inMap.data.keys.toSet();
+            if (keys != null && keys.isNotEmpty) {
+              keySet.retainAll(keys);
+            }
+            if (excludes != null && excludes.isNotEmpty) {
+              keySet.removeAll(excludes);
+            }
+            for (String k in keySet) {
+              emap.data[k] = inMap[k];
+            }
+          }
+        }
       }
       return;
     }

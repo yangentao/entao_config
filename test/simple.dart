@@ -52,7 +52,7 @@ void main() {
 
       expect(map['host'].stringValue, 'https://pub.dev');
       expect(map['port'].intValue, 443);
-      expect(map['empty'].stringValue.isEmpty, true);
+      expect(map['empty'].stringValue!.isEmpty, true);
 
       expect(map['methods'].stringList, equals(["GET", "POST", "HEAD"]));
       expect(map['methods2'].stringList, equals(["GET", "POST", "HEAD"]));
