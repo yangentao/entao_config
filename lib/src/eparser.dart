@@ -57,30 +57,21 @@ class _EParser {
     println("assign, ", key, value);
     String firstChar = key[0];
     if (firstChar == "@") {
-      // todo
-    } else if (firstChar == r"$") {
-      String newKey = key.substring(1);
-      switch (value) {
-        case "@null":
-          emap.setPath(newKey, nullValue);
-        case "@empty":
-          emap.setPath(newKey, "");
-        case "@remove":
-          emap.removePath(newKey);
-        default:
-          emap.setPath(newKey, value);
+      if (key == "@include") {
+        println("include file :", value);
       }
-    } else {
-      switch (value) {
-        case "@null":
-          emap[key] = nullValue;
-        case "@empty":
-          emap[key] = "";
-        case "@remove":
-          emap.remove(key);
-        default:
-          emap[key] = value;
-      }
+      return;
+    }
+    String newKey = firstChar == r"$" ? key.substring(1) : key;
+    switch (value) {
+      case "@null":
+        emap.setPath(newKey, nullValue);
+      case "@empty":
+        emap.setPath(newKey, "");
+      case "@remove":
+        emap.removePath(newKey);
+      default:
+        emap.setPath(newKey, value);
     }
   }
 
