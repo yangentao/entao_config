@@ -30,8 +30,10 @@ void main() {
         fee: true
       }
     ]
-    names: [a,b}]
+    names: [a,b{}]
     area:{city:peiking[]}
+    mline:"this is 
+    multi line"
     """;
 
     setUp(() {
@@ -65,8 +67,9 @@ void main() {
       expect(map.path('services.1.fee').boolValue, equals(true));
       expect(map.path('services.0').stringMap, equals({"name": "blog", "fee": "false"}));
 
-      expect(map['names'].stringList, equals(["a", "b}"]));
+      expect(map['names'].stringList, equals(["a", "b{}"]));
       expect(map.path('area.city').stringValue, equals("peiking[]"));
+      expect(map['mline'].stringValue, equals("this is \n    multi line"));
     });
   });
 }
