@@ -1,69 +1,24 @@
 part of 'config.dart';
 
-/// 松散模式, 键不需要引号,  逗号/分号/回车/换行都可以分割值.
-class yson {
-  yson._();
-
-  static String encode(dynamic value, {bool loose = false, bool prety = false}) {
-    switch (value) {
-      case null:
-        return "null";
-      case num n:
-        return n.toString();
-      case String s:
-        return _encodeJsonString(s).quoted;
-      case bool b:
-        return b.toString();
-      case List ls:
-        Iterable<String> sList = ls.map((e) => encode(e, loose: loose));
-        String sep = ", ";
-        String a = "";
-        if (prety) {
-          int sumLen = sList.sumValueBy((String e) => e.length) ?? 0;
-          if (sumLen > 50) {
-            sep = loose ? "\n" : ",\n";
-            a = "\n";
-          }
-        }
-        return "[$a${sList.join(sep)}$a]";
-      case Map map:
-        String a = prety ? "\n" : "";
-        if (loose) {
-          String sep = prety ? "\n" : ", ";
-          return "{$a${map.entries.map((e) => "${e.key}:${encode(e.value, loose: loose)}").join(sep)}$a}";
-        } else {
-          String sep = prety ? ",\n" : ", ";
-          return "{$a${map.entries.map((e) => "${encode(e.key)}:${encode(e.value, loose: loose)}").join(sep)}$a}";
-        }
-      default:
-        raise("Unknown type: $value");
-    }
-  }
-
-  static dynamic decode(String json) {
-    return _YsonParser(json).parse();
-  }
-}
-
-class _YsonParser {
+class _EParser {
   static final Set<int> _ASSIGN = {CharCode.COLON, CharCode.EQUAL};
-  static final Set<int> _SEP = {CharCode.COMMA, CharCode.SEMI, CharCode.CR, CharCode.LF};
-  static final Set<int> _TRAIL = {CharCode.SP, CharCode.HTAB, CharCode.CR, CharCode.LF, CharCode.COMMA, CharCode.SEMI};
-  final TextScanner _ts;
+  static final Set<int> _SEP = {CharCode.CR, CharCode.LF, CharCode.COMMA};
+  static final Set<int> _TRAIL = {CharCode.SP, CharCode.HTAB, CharCode.CR, CharCode.LF, CharCode.COMMA};
+  final TextScanner ts;
 
-  _YsonParser(String json) : _ts = TextScanner(json);
+  _EParser(String text) : ts = TextScanner(text);
 
   dynamic parse() {
     dynamic v = _parseValue();
-    _ts.skipWhites();
-    if (!_ts.isEnd) _raise();
+    ts.skipWhites();
+    if (!ts.isEnd) _raise();
     return v;
   }
 
   dynamic _parseValue() {
-    _ts.skipWhites();
-    if (_ts.isEnd) return null;
-    int? ch = _ts.nowChar;
+    ts.skipWhites();
+    if (ts.isEnd) return null;
+    int? ch = ts.nowChar;
     switch (ch) {
       case null:
         return null;
@@ -78,13 +33,13 @@ class _YsonParser {
       case >= CharCode.NUM0 && <= CharCode.NUM9:
         return _parseNum();
       case CharCode.n:
-        _ts.expectString("null");
+        ts.expectString("null");
         return null;
       case CharCode.t:
-        _ts.expectString("true");
+        ts.expectString("true");
         return true;
       case CharCode.f:
-        _ts.expectString("false");
+        ts.expectString("false");
         return false;
       default:
         _raise();
@@ -92,68 +47,68 @@ class _YsonParser {
   }
 
   Map<String, dynamic> parseObject() {
-    _ts.skipWhites();
+    ts.skipWhites();
     Map<String, dynamic> map = {};
-    _ts.expectChar(CharCode.LCUB);
-    _ts.skipWhites();
-    while (_ts.nowChar != null && _ts.nowChar != CharCode.RCUB) {
-      _ts.skipWhites();
-      String key = _ts.nowChar == CharCode.QUOTE ? _parseString() : _parseIdent();
-      _ts.skipWhites();
-      _ts.expectAnyChar(_ASSIGN);
+    ts.expectChar(CharCode.LCUB);
+    ts.skipWhites();
+    while (ts.nowChar != null && ts.nowChar != CharCode.RCUB) {
+      ts.skipWhites();
+      String key = ts.nowChar == CharCode.QUOTE ? _parseString() : _parseIdent();
+      ts.skipWhites();
+      ts.expectAnyChar(_ASSIGN);
       // _ts.expectChar(CharCode.COLON);
       dynamic v = _parseValue();
       map[key] = v;
-      List<int> trails = _ts.skipChars(_TRAIL);
-      if (_ts.nowChar != null && _ts.nowChar != CharCode.RCUB) {
+      List<int> trails = ts.skipChars(_TRAIL);
+      if (ts.nowChar != null && ts.nowChar != CharCode.RCUB) {
         if (trails.intersect(_SEP).isEmpty) _raise();
       }
     }
-    _ts.expectChar(CharCode.RCUB);
+    ts.expectChar(CharCode.RCUB);
     return map;
   }
 
   List<dynamic> parseArray() {
-    _ts.skipWhites();
+    ts.skipWhites();
     List<dynamic> list = [];
-    _ts.expectChar(CharCode.LSQB);
-    _ts.skipWhites();
-    while (_ts.nowChar != CharCode.RSQB) {
-      _ts.skipWhites();
+    ts.expectChar(CharCode.LSQB);
+    ts.skipWhites();
+    while (ts.nowChar != CharCode.RSQB) {
+      ts.skipWhites();
       dynamic v = _parseValue();
       list.add(v);
-      List<int> trails = _ts.skipChars(_TRAIL);
-      if (_ts.nowChar != CharCode.RSQB) {
+      List<int> trails = ts.skipChars(_TRAIL);
+      if (ts.nowChar != CharCode.RSQB) {
         if (trails.intersect(_SEP).isEmpty) _raise();
       }
     }
-    _ts.expectChar(CharCode.RSQB);
+    ts.expectChar(CharCode.RSQB);
     return list;
   }
 
   num _parseNum() {
-    List<int> buf = _ts.moveNext(acceptor: (e) => _isNum(e));
+    List<int> buf = ts.moveNext(acceptor: (e) => _isNum(e));
     String s = String.fromCharCodes(buf);
     num n = num.parse(s);
     return n;
   }
 
   String _parseIdent() {
-    List<int> charList = _ts.expectIdent();
+    List<int> charList = ts.expectIdent();
     if (charList.isEmpty) _raise();
     return String.fromCharCodes(charList);
   }
 
   String _parseString() {
-    _ts.expectChar(CharCode.QUOTE);
-    List<int> charList = _ts.moveNext(terminator: (e) => e == CharCode.QUOTE && _ts.matched.lastOrNull != CharCode.BSLASH);
+    ts.expectChar(CharCode.QUOTE);
+    List<int> charList = ts.moveNext(terminator: (e) => e == CharCode.QUOTE && ts.matched.lastOrNull != CharCode.BSLASH);
     String s = _codesToString(charList);
-    _ts.expectChar(CharCode.QUOTE);
+    ts.expectChar(CharCode.QUOTE);
     return s;
   }
 
   Never _raise([String msg = "Parse Error"]) {
-    throw Exception("$msg. ${_ts.position}, ${_ts.rest}");
+    throw Exception("$msg. ${ts.position}, ${ts.rest}");
   }
 }
 
