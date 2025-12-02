@@ -3,6 +3,14 @@ part of 'config.dart';
 class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
   final Map<String, EValue> data = {};
 
+  EMap([Map<String, dynamic>? map]) {
+    if (map != null && map.isNotEmpty) {
+      for (final e in map.entries) {
+        this[e.key] = e.value;
+      }
+    }
+  }
+
   @override
   EValue operator [](Object key) {
     return data[key.toString()] ?? ENull.inst;
@@ -13,7 +21,7 @@ class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
     if (value == null) {
       data.remove(key.toString());
     } else {
-      data[key.toString()] = _toEnValue(value);
+      data[key.toString()] = _toEValue(value);
     }
   }
 
@@ -39,10 +47,21 @@ class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
       }
     }, indent: pretty);
   }
+
+  @override
+  String toString() {
+    return serialize(pretty: false);
+  }
 }
 
 class EList extends EValue with Iterable<EValue> {
   List<EValue> data = [];
+
+  EList([List<dynamic>? values]) {
+    if (values != null && values.isNotEmpty) {
+      data.addAll(values.map((e) => _toEValue(e)));
+    }
+  }
 
   @override
   EValue operator [](Object key) {
@@ -54,12 +73,12 @@ class EList extends EValue with Iterable<EValue> {
     int index = _intKey(key);
     if (index >= 0) {
       if (index < data.length) {
-        data[index] = _toEnValue(value);
+        data[index] = _toEValue(value);
       } else {
         for (int i = data.length; i < index; ++i) {
           data.add(nullValue);
         }
-        data.add(_toEnValue(value));
+        data.add(_toEValue(value));
       }
     }
   }
@@ -78,18 +97,20 @@ class EList extends EValue with Iterable<EValue> {
       for (var e in data) {
         if (!first) buf.write(", ");
         first = false;
-        switch (e) {
-          case ENull en:
-            if (p) buf.indentLine;
-            en.serializeTo(buf, pretty: p);
-          case EString es:
-            if (p) buf.indentLine;
-            es.serializeTo(buf, pretty: p);
-          case EList el:
-            el.serializeTo(buf, pretty: p);
-          case EMap em:
-            em.serializeTo(buf, pretty: p);
-        }
+        if (p) buf.indentLine;
+        e.serializeTo(buf, pretty: p);
+        // switch (e) {
+        //   case ENull en:
+        //     if (p) buf.indentLine;
+        //     en.serializeTo(buf, pretty: p);
+        //   case EString es:
+        //     if (p) buf.indentLine;
+        //     es.serializeTo(buf, pretty: p);
+        //   case EList el:
+        //     el.serializeTo(buf, pretty: p);
+        //   case EMap em:
+        //     em.serializeTo(buf, pretty: p);
+        // }
       }
     }, indent: p);
   }
@@ -209,14 +230,15 @@ sealed class EValue {
   bool setPaths(List<String> paths, Object value) {
     if (paths.isEmpty) return false;
     if (paths.length == 1) {
-      this[paths.first] = _toEnValue(value);
+      this[paths.first] = _toEValue(value);
       return true;
     }
     return this[paths.first].setPaths(paths.sublist(1), value);
   }
 }
 
-EValue _toEnValue(Object? value) {
+EValue _toEValue(Object? value) {
+  if (value is EValue) return value;
   switch (value) {
     case null:
       return nullValue;
@@ -226,12 +248,12 @@ EValue _toEnValue(Object? value) {
       return EString(s);
     case List<dynamic> ls:
       final el = EList();
-      el.data.addAll(ls.map((e) => _toEnValue(e)));
+      el.data.addAll(ls.map((e) => _toEValue(e)));
       return el;
     case Map<String, dynamic> map:
       final em = EMap();
       for (final p in map.entries) {
-        em[p.key] = _toEnValue(p.value);
+        em[p.key] = _toEValue(p.value);
       }
       return em;
     default:
