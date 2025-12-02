@@ -1,0 +1,17 @@
+name: entao_config
+description: dart config file with struct formats.
+version: 1.0.0
+repository: https://github.com/yangentao/entao_config
+homepage: https://github.com/yangentao/entao_config
+
+environment:
+  sdk: ^3.6.0
+resolution: workspace
+
+# Add regular dependencies here.
+dependencies:
+  # path: ^1.9.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6
