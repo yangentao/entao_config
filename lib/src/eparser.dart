@@ -1,17 +1,23 @@
 part of 'econfig.dart';
 
 class _EParser {
-  static final Set<int> _ASSIGN = {CharCode.COLON, CharCode.EQUAL};
-  static final Set<int> _LN_COMMA = {CharCode.CR, CharCode.LF, CharCode.COMMA};
-  static final Set<int> _WHITE_COMMA = {CharCode.SP, CharCode.HTAB, CharCode.CR, CharCode.LF, CharCode.COMMA};
-  static final Set<int> _STR_STOP = {CharCode.CR, CharCode.LF, CharCode.COMMA, CharCode.RCUB, CharCode.RSQB};
+  static const Set<int> _ASSIGN = {CharCode.COLON, CharCode.EQUAL};
+  static const Set<int> _LN_COMMA = {CharCode.CR, CharCode.LF, CharCode.COMMA};
+  static const Set<int> _WHITE_COMMA = {CharCode.SP, CharCode.HTAB, CharCode.CR, CharCode.LF, CharCode.COMMA};
+
+  // static const Set<int> _STR_STOP = {CharCode.CR, CharCode.LF, CharCode.COMMA, CharCode.RCUB, CharCode.RSQB};
+  static const Set<int> _STR_STOP_IN_LIST = {CharCode.CR, CharCode.LF, CharCode.COMMA, CharCode.RSQB};
+  static const Set<int> _STR_STOP_IN_MAP = {CharCode.CR, CharCode.LF, CharCode.COMMA, CharCode.RCUB};
   final TextScanner ts;
   final String cwd;
+  final Stack<Object> scope = Stack();
 
+  // ignore: unused_element_parameter
   _EParser(String text, {this.cwd = ""}) : ts = TextScanner(text);
 
   EMap parse() {
     EMap map = EMap();
+    scope.push(map);
     while (ts.notEnd) {
       ts.skipWhites();
       if (ts.isEnd) break;
@@ -30,6 +36,7 @@ class _EParser {
         }
       }
     }
+    scope.pop();
     return map;
   }
 
@@ -53,13 +60,14 @@ class _EParser {
   EMap parseObject() {
     ts.skipWhites();
     EMap map = EMap();
+    scope.push(map);
     ts.expectChar(CharCode.LCUB);
     ts.skipWhites();
     while (ts.nowChar != null && ts.nowChar != CharCode.RCUB) {
       ts.skipWhites();
       if (ts.isEnd) break;
       String key = ts.nowChar == CharCode.QUOTE ? _parseStringQuoted() : _parseKey();
-      ts.skipWhites();
+      ts.skipSpTab();
       ts.expectAnyChar(_ASSIGN);
       dynamic v = _parseValue();
       map[key] = v;
@@ -69,12 +77,14 @@ class _EParser {
       }
     }
     ts.expectChar(CharCode.RCUB);
+    scope.pop();
     return map;
   }
 
   EList parseArray() {
     ts.skipWhites();
     EList list = EList();
+    scope.push(list);
     ts.expectChar(CharCode.LSQB);
     while (ts.nowChar != CharCode.RSQB) {
       ts.skipWhites();
@@ -86,6 +96,7 @@ class _EParser {
       }
     }
     ts.expectChar(CharCode.RSQB);
+    scope.pop();
     return list;
   }
 
@@ -110,14 +121,15 @@ class _EParser {
 
   String _parseStringQuoted() {
     ts.expectChar(CharCode.QUOTE);
-    List<int> charList = ts.moveUntil(const [CharCode.QUOTE, CharCode.CR, CharCode.LF], escapeChar: CharCode.BSLASH);
+    List<int> charList = ts.moveUntilChar(CharCode.QUOTE, escapeChar: CharCode.BSLASH);
     String s = _codesToString(charList);
     ts.expectChar(CharCode.QUOTE);
     return s;
   }
 
   String _parseString() {
-    List<int> charList = ts.moveUntil(_STR_STOP, escapeChar: CharCode.BSLASH);
+    Set<int> untilSet = scope.peek() is EMap ? _STR_STOP_IN_MAP : _STR_STOP_IN_LIST;
+    List<int> charList = ts.moveUntil(untilSet, escapeChar: CharCode.BSLASH);
     if (charList.isEmpty) return "";
     String s = _codesToString(charList);
     return s;

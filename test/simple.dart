@@ -10,6 +10,12 @@ void main() {
     port: 443
     empty:
     methods: [GET,POST,HEAD]
+    methods2: [GET,POST,HEAD,]
+    methods3: [
+        GET
+        POST
+        HEAD
+    ]
     services: [
       {
         name:blog
@@ -20,6 +26,8 @@ void main() {
         fee: true
       }
     ]
+    names: [a,b}]
+    area:{city:peiking[]}
     """;
 
     setUp(() {
@@ -32,9 +40,11 @@ void main() {
 
       expect(map['host'].stringValue, 'https://pub.dev');
       expect(map['port'].intValue, 443);
-      expect(map['empty'].stringValue.isEmpty, true );
+      expect(map['empty'].stringValue.isEmpty, true);
 
       expect(map['methods'].stringList, equals(["GET", "POST", "HEAD"]));
+      expect(map['methods2'].stringList, equals(["GET", "POST", "HEAD"]));
+      expect(map['methods3'].stringList, equals(["GET", "POST", "HEAD"]));
 
       expect(map['methods'][0].stringValue, equals("GET"));
       expect(map['methods'][1].stringValue, equals("POST"));
@@ -50,6 +60,9 @@ void main() {
       expect(map.path('services.1.name').stringValue, equals("repo"));
       expect(map.path('services.1.fee').boolValue, equals(true));
       expect(map.path('services.0').stringMap, equals({"name": "blog", "fee": "false"}));
+
+      expect(map['names'].stringList, equals(["a", "b}"]));
+      expect(map.path('area.city').stringValue, equals("peiking[]"));
     });
   });
 }

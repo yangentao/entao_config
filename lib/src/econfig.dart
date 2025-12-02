@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:entao_config/src/IndentBuffer.dart';
+import 'package:entao_config/src/Stack.dart';
 import 'package:entao_dutil/entao_dutil.dart';
 
 part 'eparser.dart';
