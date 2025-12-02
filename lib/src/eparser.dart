@@ -16,34 +16,41 @@ class _EParser {
   _EParser(String text, {this.cwd = ""}) : ts = TextScanner(text);
 
   EMap parse() {
+    return parseObject(root: true);
+  }
+
+  EMap parseObject({bool root = false}) {
     EMap map = EMap();
     scope.push(map);
-    while (ts.notEnd) {
+
+    if (!root) {
+      ts.skipWhites();
+      ts.expectChar(CharCode.LCUB);
+      ts.skipWhites();
+    }
+    while (!_isObjectEnd(root)) {
       ts.skipWhites();
       if (ts.isEnd) break;
-      String key;
-      int ch = ts.currentChar;
-      switch (ch) {
-        case CharCode.AT:
-          key = _parseKey();
-        case CharCode.DOLLAR:
-          key = _parseKey();
-        case CharCode.QUOTE:
-          key = _parseStringQuoted();
-        default:
-          key = _parseKey();
-      }
+      String key = ts.currentChar == CharCode.QUOTE ? _parseStringQuoted() : _parseKey();
       ts.skipSpTab();
       ts.expectAnyChar(_ASSIGN);
       dynamic v = _parseValue();
       _assignMap(map, key, v);
       List<int> trails = ts.skipChars(_WHITE_COMMA);
-      if (ts.notEnd) {
+      if (!_isObjectEnd(root)) {
         if (trails.intersect(_LN_COMMA).isEmpty) _raise();
       }
     }
+    if (!root) {
+      ts.expectChar(CharCode.RCUB);
+    }
     scope.pop();
     return map;
+  }
+
+  bool _isObjectEnd(bool root) {
+    if (root) return ts.isEnd;
+    return ts.isEnd || ts.nowChar == CharCode.RCUB;
   }
 
   void _assignMap(EMap emap, String key, dynamic value) {
@@ -83,30 +90,6 @@ class _EParser {
     return String.fromCharCodes(charList);
   }
 
-  EMap parseObject() {
-    ts.skipWhites();
-    EMap map = EMap();
-    scope.push(map);
-    ts.expectChar(CharCode.LCUB);
-    ts.skipWhites();
-    while (ts.nowChar != null && ts.nowChar != CharCode.RCUB) {
-      ts.skipWhites();
-      if (ts.isEnd) break;
-      String key = ts.nowChar == CharCode.QUOTE ? _parseStringQuoted() : _parseKey();
-      ts.skipSpTab();
-      ts.expectAnyChar(_ASSIGN);
-      dynamic v = _parseValue();
-      map[key] = v;
-      List<int> trails = ts.skipChars(_WHITE_COMMA);
-      if (ts.nowChar != null && ts.nowChar != CharCode.RCUB) {
-        if (trails.intersect(_LN_COMMA).isEmpty) _raise();
-      }
-    }
-    ts.expectChar(CharCode.RCUB);
-    scope.pop();
-    return map;
-  }
-
   dynamic _parseValue() {
     ts.skipSpTab();
     if (ts.isEnd) return null;
@@ -142,7 +125,6 @@ class _EParser {
     scope.pop();
     return list;
   }
-
 
   String _parseAtValue() {
     List<int> buf = ts.moveNext(acceptor: (e) => ts.matched.isEmpty ? e == CharCode.AT : CharCode.isAlpha(e));
