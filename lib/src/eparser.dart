@@ -31,11 +31,35 @@ class _EParser {
     while (!_isObjectEnd(root)) {
       ts.skipWhites();
       if (ts.isEnd) break;
-      String key = ts.currentChar == CharCode.QUOTE ? _parseStringQuoted() : _parseKey();
+      bool atIf = false;
+      String key;
+      switch (ts.currentChar) {
+        case CharCode.QUOTE:
+          key = _parseStringQuoted();
+        case CharCode.AT:
+          if (ts.peek("@if ")) {
+            atIf = true;
+            ts.skip(size: 4);
+            ts.skipSpTab();
+            key = _parseKey();
+          } else if (ts.peek("@end")) {
+            ts.skip(size: 4);
+            continue;
+          } else {
+            key = _parseKey();
+          }
+
+        default:
+          key = _parseKey();
+      }
       ts.skipSpTab();
       ts.expectAnyChar(_ASSIGN);
       dynamic v = _parseValue();
-      _assignMap(map, key, v);
+      if (atIf) {
+        _ifProcess(map, key, "=", v);
+      } else {
+        _assignMap(map, key, v);
+      }
       List<int> trails = ts.skipChars(_WHITE_COMMA);
       if (!_isObjectEnd(root)) {
         if (trails.intersect(_LN_COMMA).isEmpty) _raise();
@@ -46,6 +70,16 @@ class _EParser {
     }
     scope.pop();
     return map;
+  }
+
+  void _ifProcess(EMap emap, String key, String op, dynamic value) {
+    if (key.startsWith(r"$")) key = key.substring(1);
+    EValue ev = emap.path(key);
+    bool result = ev.equal(value);
+    if (!result) {
+      ts.moveUntilString("@end", escapeChar: CharCode.BSLASH);
+      if (ts.notEnd) ts.skip(size: 4);
+    }
   }
 
   bool _isObjectEnd(bool root) {

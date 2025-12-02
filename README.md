@@ -1,5 +1,7 @@
 ## dart config file with struct formats.
 
+comment:  '#...'
+
 instructs:
     @include
     @if

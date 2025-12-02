@@ -12,6 +12,15 @@ class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
   }
 
   @override
+  int get length => data.length;
+
+  @override
+  bool get isEmpty => data.isEmpty;
+
+  @override
+  bool get isNotEmpty => data.isNotEmpty;
+
+  @override
   EValue operator [](Object key) {
     String k = key.toString();
     if (k.contains(".")) return this.path(k);
@@ -35,6 +44,19 @@ class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
   @override
   bool remove(Object key) {
     return null != data.remove(key.toString());
+  }
+
+  @override
+  bool equal(Object? other) {
+    if (other case EMap m) {
+      if (this.data.length != m.data.length) return false;
+      if (this.data.keys.toSet().difference(m.data.keys.toSet()).isNotEmpty) return false;
+      for (final e in data.entries) {
+        if (!e.value.equal(m.data[e.key]!)) return false;
+      }
+      return true;
+    }
+    return false;
   }
 
   @override
@@ -90,6 +112,15 @@ class EList extends EValue with Iterable<EValue> {
     }
   }
 
+  @override
+  int get length => data.length;
+
+  @override
+  bool get isEmpty => data.isEmpty;
+
+  @override
+  bool get isNotEmpty => data.isNotEmpty;
+
   EList add(Object? value) {
     data.add(_toEValue(value));
     return this;
@@ -128,6 +159,18 @@ class EList extends EValue with Iterable<EValue> {
   bool remove(Object key) {
     data.removeAt(_intKey(key));
     return true;
+  }
+
+  @override
+  bool equal(Object? other) {
+    if (other case EList ls) {
+      if (this.length != ls.length) return false;
+      for (int i = 0; i < this.length; ++i) {
+        if (!data[i].equal(ls[i])) return false;
+      }
+      return true;
+    }
+    return false;
   }
 
   @override
@@ -175,6 +218,13 @@ class EString extends EValue implements Comparable<String> {
   }
 
   @override
+  bool equal(Object? other) {
+    if (other case EString s) return data == s.data;
+    if (other case String s) return data == s;
+    return false;
+  }
+
+  @override
   String toString() {
     return data;
   }
@@ -208,6 +258,9 @@ class ENull extends EValue {
 
   @override
   bool remove(Object key) => false;
+
+  @override
+  bool equal(Object? other) => other == null || other is ENull;
 
   @override
   int get _estimatedSize => 5;
@@ -277,6 +330,8 @@ sealed class EValue {
   void operator []=(Object key, Object? value);
 
   bool remove(Object key);
+
+  bool equal(Object? other);
 
   @override
   String toString() {
