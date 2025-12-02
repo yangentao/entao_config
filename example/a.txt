@@ -1,6 +1,6 @@
 @include: {
     file: b.txt
-
+    excludes: [pwd]
 }
 host: https://google.com
 port: 443

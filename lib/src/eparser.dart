@@ -60,38 +60,51 @@ class _EParser {
     return File(pathUtil.join(currentDir!, name));
   }
 
+  void _include(EMap emap, String key, dynamic value) {
+    if (value case String s) {
+      File? file = _includeFile(s.trim());
+      if (file != null) {
+        EMap inMap = EConfig.parseFile(file);
+        emap.data.addAll(inMap.data);
+      } else {
+        _loge("read file error: $s");
+      }
+      return;
+    }
+    if (value case EMap em) {
+      String? filename = em['file'].stringValue;
+      if (filename == null) {
+        _loge("no file name in @include params");
+        return;
+      }
+      File? file = _includeFile(filename);
+      if (file == null) {
+        _loge("read file error: $filename");
+        return;
+      }
+      String? charset = em['charset'].stringValue;
+      EMap inMap = EConfig.parseFile(file, encoding: charset != null ? (Encoding.getByName(charset) ?? utf8) : utf8);
+      List<String>? keys = em['keys'].stringList;
+      List<String>? excludes = em['excludes'].stringList;
+      Set<String> keySet = inMap.data.keys.toSet();
+      if (keys != null && keys.isNotEmpty) {
+        keySet.retainAll(keys);
+      }
+      if (excludes != null && excludes.isNotEmpty) {
+        keySet.removeAll(excludes);
+      }
+      for (String k in keySet) {
+        emap.data[k] = inMap[k];
+      }
+    }
+  }
+
   void _assignMap(EMap emap, String key, dynamic value) {
-    println("assign, ", key, value);
+    // println("assign, ", key, value);
     String firstChar = key[0];
     if (firstChar == "@") {
       if (key == "@include") {
-        if (value case String s) {
-          File? file = _includeFile(s.trim());
-          if (file != null) {
-            EMap inMap = EConfig.parseFile(file);
-            emap.data.addAll(inMap.data);
-          }
-        } else if (value case EMap em) {
-          String? filename = em['file'].stringValue;
-          if (filename == null) return;
-          File? file = _includeFile(filename);
-          if (file != null) {
-            String? charset = em['charset'].stringValue;
-            EMap inMap = EConfig.parseFile(file, encoding: charset != null ? (Encoding.getByName(charset) ?? utf8) : utf8);
-            List<String>? keys = em['keys'].stringList;
-            List<String>? excludes = em['excludes'].stringList;
-            Set<String> keySet = inMap.data.keys.toSet();
-            if (keys != null && keys.isNotEmpty) {
-              keySet.retainAll(keys);
-            }
-            if (excludes != null && excludes.isNotEmpty) {
-              keySet.removeAll(excludes);
-            }
-            for (String k in keySet) {
-              emap.data[k] = inMap[k];
-            }
-          }
-        }
+        _include(emap, key, value);
       }
       return;
     }
