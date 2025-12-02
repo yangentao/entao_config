@@ -60,6 +60,13 @@ class _EParser {
     return File(pathUtil.join(currentDir!, name));
   }
 
+  Encoding _includeCharset(EMap em) {
+    String? charset = em['charset'].stringValue;
+    if (charset == null || charset.isEmpty) return utf8;
+    if (charset == "system") return systemEncoding;
+    return Encoding.getByName(charset) ?? utf8;
+  }
+
   void _include(EMap emap, String key, dynamic value) {
     if (value case String s) {
       File? file = _includeFile(s.trim());
@@ -82,8 +89,7 @@ class _EParser {
         _loge("read file error: $filename");
         return;
       }
-      String? charset = em['charset'].stringValue;
-      EMap inMap = EConfig.parseFile(file, encoding: charset != null ? (Encoding.getByName(charset) ?? utf8) : utf8);
+      EMap inMap = EConfig.parseFile(file, encoding: _includeCharset(em));
       List<String>? keys = em['keys'].stringList;
       List<String>? excludes = em['excludes'].stringList;
       Set<String> keySet = inMap.data.keys.toSet();
