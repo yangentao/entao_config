@@ -7,10 +7,10 @@ void main() {
     final String text = r"""
     methods: [GET,POST,HEAD]
     port: 80
-    @if port != 80
-      $methods.-1 = PUT
+    @if methods @= GETT
+      HAS_GET : true 
     @else 
-      $methods.-1 = DELETE
+      HAS_GET : false 
     @end
     user: entao
     """;

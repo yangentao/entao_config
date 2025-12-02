@@ -41,7 +41,7 @@ class _EParser {
             ts.skipSpTab();
             key = _parseKey();
             ts.skipSpTab();
-            List<String> opList = const [">=", "<=", "!=", "=", ">", "<"];
+            List<String> opList = const ["@=", "=@", ">=", "<=", "!=", "=", ">", "<"];
             int index = ts.expectAnyString(opList);
             dynamic v = _parseValue();
             _ifProcess(map, key, opList[index], v);
@@ -131,6 +131,55 @@ class _EParser {
     raise("Unsupport operator: $op");
   }
 
+  bool _cmpContains(EValue ev, String op, dynamic value) {
+    if (value == null) {
+      return ev is ENull;
+    }
+    if (ev is ENull) return false;
+    if (ev is EString) {
+      if (op == "@=") {
+        if (value is String) {
+          return ev.data.contains(value);
+        }
+      } else if (op == "=@") {
+        if (value is String) {
+          return value.contains(ev.data);
+        } else if (value is EList) {
+          return value.any((a) => a.equal(ev));
+        } else if (value is EMap) {
+          return value.data.containsKey(ev.data);
+        }
+      }
+    }
+    if (ev is EList) {
+      if (op == "@=") {
+        if (value is String) {
+          return ev.any((a) => a.equal(value));
+        } else if (value is EList) {
+          for (final a in value.data) {
+            if (!ev.any((b) => b.equal(a))) return false;
+          }
+          return true;
+        }
+      } else if (op == "=@") {
+        if (value is EList) {
+          for (final a in ev.data) {
+            if (!value.any((b) => b.equal(a))) return false;
+          }
+          return true;
+        }
+      }
+    }
+    if (ev is EMap) {
+      if (op == "@=") {
+        if (value is String) {
+          return ev.data.containsKey(value);
+        }
+      }
+    }
+    raise("NOT support operator: $op");
+  }
+
   void _ifProcess(EMap emap, String key, String op, dynamic value) {
     println(key, op, value);
     if (key.startsWith(r"$")) key = key.substring(1);
@@ -141,6 +190,10 @@ class _EParser {
         result = ev.equal(value);
       case "!=":
         result = !ev.equal(value);
+      case "@=":
+        result = _cmpContains(ev, op, value);
+      case "=@":
+        result = _cmpContains(ev, op, value);
       default:
         result = _cmpString(ev, op, value);
     }
