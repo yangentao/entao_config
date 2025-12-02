@@ -3,6 +3,6 @@
 /// More dartdocs go here.
 library;
 
-export 'src/econfig.dart';
+export 'src/config.dart';
 
 // TODO: Export any libraries intended for clients of this package.
