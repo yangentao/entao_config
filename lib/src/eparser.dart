@@ -4,6 +4,7 @@ class _EParser {
   static final Set<int> _ASSIGN = {CharCode.COLON, CharCode.EQUAL};
   static final Set<int> _LN_COMMA = {CharCode.CR, CharCode.LF, CharCode.COMMA};
   static final Set<int> _WHITE_COMMA = {CharCode.SP, CharCode.HTAB, CharCode.CR, CharCode.LF, CharCode.COMMA};
+  static final Set<int> _STR_STOP = {CharCode.CR, CharCode.LF, CharCode.COMMA, CharCode.RCUB, CharCode.RSQB};
   final TextScanner ts;
   final String cwd;
 
@@ -116,7 +117,7 @@ class _EParser {
   }
 
   String _parseString() {
-    List<int> charList = ts.moveUntil(_LN_COMMA, escapeChar: CharCode.BSLASH);
+    List<int> charList = ts.moveUntil(_STR_STOP, escapeChar: CharCode.BSLASH);
     String s = _codesToString(charList);
     return s;
   }

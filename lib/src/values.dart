@@ -55,7 +55,7 @@ class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
 }
 
 class EList extends EValue with Iterable<EValue> {
-  List<EValue> data = [];
+  final List<EValue> data = [];
 
   EList([List<dynamic>? values]) {
     if (values != null && values.isNotEmpty) {
@@ -110,7 +110,7 @@ class EList extends EValue with Iterable<EValue> {
 }
 
 class EString extends EValue implements Comparable<String> {
-  String data;
+  final String data;
 
   EString(this.data);
 
@@ -168,6 +168,13 @@ class ENull extends EValue {
 
 sealed class EValue {
   bool get isNull => this is ENull;
+
+  List<String> get listString {
+    if (this case EList el) {
+      return el.data.mapList((e) => (e as EString).data);
+    }
+    raise("NOT a Strign list");
+  }
 
   bool get boolValue {
     return _trues.contains(stringValue.toLowerCase());

@@ -7,6 +7,7 @@ void main() {
     final String text = r"""
     host: https\://pub.dev
     port: 443
+    methods: [GET,POST,HEAD]
     """;
 
     setUp(() {
@@ -15,9 +16,13 @@ void main() {
 
     test('t1', () {
       EMap map = EConfig.parse(text);
-      println(map.serialize(pretty: true ));
+      println(map.serialize(pretty: true));
       expect(map['host'].stringValue, 'https://pub.dev');
       expect(map['port'].intValue, 443);
+      expect(map['methods'].listString, equals(["GET", "POST", "HEAD"]));
+      expect(map['methods'][0].stringValue, equals("GET"));
+      expect(map['methods'][1].stringValue, equals("POST"));
+      expect(map['methods'][2].stringValue, equals("HEAD"));
     });
   });
 }
