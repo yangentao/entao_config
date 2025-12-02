@@ -9,11 +9,11 @@ class _EParser {
   static const Set<int> _STR_STOP_IN_LIST = {CharCode.CR, CharCode.LF, CharCode.COMMA, CharCode.RSQB};
   static const Set<int> _STR_STOP_IN_MAP = {CharCode.CR, CharCode.LF, CharCode.COMMA, CharCode.RCUB};
   final TextScanner ts;
-  final String cwd;
+  final String? currentDir;
   final Stack<Object> scope = Stack();
 
   // ignore: unused_element_parameter
-  _EParser(String text, {this.cwd = ""}) : ts = TextScanner(text);
+  _EParser(String text, {this.currentDir}) : ts = TextScanner(text);
 
   EMap parse() {
     return parseObject(root: true);
@@ -97,7 +97,7 @@ class _EParser {
       case CharCode.LCUB:
         return parseObject();
       case CharCode.LSQB:
-        return parseArray();
+        return _parseArray();
       case CharCode.AT:
         return _parseAtValue();
       case CharCode.QUOTE:
@@ -107,7 +107,7 @@ class _EParser {
     }
   }
 
-  EList parseArray() {
+  EList _parseArray() {
     ts.skipWhites();
     EList list = EList();
     scope.push(list);

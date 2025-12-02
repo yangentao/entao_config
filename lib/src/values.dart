@@ -14,7 +14,7 @@ class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
   @override
   EValue operator [](Object key) {
     String k = key.toString();
-    if (k.contains(".")) return path(k);
+    if (k.contains(".")) return this.path(k);
     return data[k] ?? nullValue;
   }
 
@@ -98,7 +98,7 @@ class EList extends EValue with Iterable<EValue> {
   @override
   EValue operator [](Object key) {
     String k = key.toString();
-    if (k.contains(".")) return path(k);
+    if (k.contains(".")) return this.path(k);
     return data.getOr(_intKey(key)) ?? nullValue;
   }
 
@@ -159,7 +159,7 @@ class EString extends EValue implements Comparable<String> {
   @override
   EValue operator [](Object key) {
     String k = key.toString();
-    if (k.contains(".")) return path(k);
+    if (k.contains(".")) return this.path(k);
     int index = _intKey(key);
     return EString(data[index]);
   }

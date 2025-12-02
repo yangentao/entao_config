@@ -20,8 +20,10 @@ value:
 @include: default.config
 @include: "u s e r.config"
 @include: {
-    from: user.config
+    file: user.config
+    charset: utf-8/system
     keys:[host,port,user]
+    excludes:[pwd]
 }
 
 host: https://pub.dev
