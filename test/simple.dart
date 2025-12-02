@@ -24,6 +24,10 @@ void main() {
       {
         name:repo
         fee: true
+      },
+      {
+        name:repo2
+        fee: true
       }
     ]
     names: [a,b}]
