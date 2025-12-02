@@ -1,4 +1,4 @@
-## dart config file with struct formats.
+## Config file with struct formats.
 
 comment:  '#...'
 

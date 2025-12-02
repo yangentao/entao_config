@@ -5,12 +5,10 @@ import 'package:entao_config/src/IndentBuffer.dart';
 import 'package:entao_config/src/Stack.dart';
 import 'package:entao_dutil/entao_dutil.dart';
 import 'package:path/path.dart' as pathUtil;
-import 'package:println/println.dart';
 
 part 'eparser.dart';
 part 'values.dart';
 
-/// 松散模式, 键不需要引号,  逗号/分号/回车/换行都可以分割值.
 class EConfig {
   EConfig._();
 
