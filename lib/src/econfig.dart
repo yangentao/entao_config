@@ -1,10 +1,10 @@
 import 'package:entao_dutil/entao_dutil.dart';
 
-class EnConfig {
-  EnConfig._();
+class EConfig {
+  EConfig._();
 
   //map or list
-  static EnValue? tryParse(String text, {bool allowKeyPath = true}) {
+  static EValue? tryParse(String text, {bool allowKeyPath = true}) {
     try {
       var v = parse(text, allowKeyPath: allowKeyPath);
       return v.isNull ? null : v;
@@ -14,8 +14,8 @@ class EnConfig {
   }
 
   //map or list
-  static EnValue parse(String text, {bool allowKeyPath = true}) {
-    _EnConfigParser p = _EnConfigParser(text, allowKeyPath: allowKeyPath);
+  static EValue parse(String text, {bool allowKeyPath = true}) {
+    _EConfigParser p = _EConfigParser(text, allowKeyPath: allowKeyPath);
     return p.parse();
   }
 
@@ -28,12 +28,12 @@ extension StrignEnExt on String {
   String get enEscaped => _enEscape(this);
 }
 
-class _EnConfigParser {
+class _EConfigParser {
   final bool allowKeyPath;
   final List<int> data;
   int _current = 0;
 
-  _EnConfigParser(String text, {this.allowKeyPath = true}) : data = text.codeUnits;
+  _EConfigParser(String text, {this.allowKeyPath = true}) : data = text.codeUnits;
 
   bool get _end {
     if (_current >= data.length) return true;
@@ -56,14 +56,14 @@ class _EnConfigParser {
   }
 
   /// object OR array
-  EnValue parse() {
+  EValue parse() {
     int ch = _firstChar();
     if (ch == 0) return EnNull.inst;
     if (ch == CharCode.LSQB) return parseArray();
     return parseObject(isRoot: ch != CharCode.LCUB);
   }
 
-  EnValue _parseValue() {
+  EValue _parseValue() {
     _skipSpTab();
     if (_end) return EnNull.inst;
     int ch = _currentChar;
@@ -98,11 +98,11 @@ class _EnConfigParser {
     }
   }
 
-  EnValue parseArray() {
+  EValue parseArray() {
     _skipSpTab();
     _tokenc([CharCode.LSQB]);
     _skipSpTabCrLf();
-    EnList ya = EnList();
+    EList ya = EList();
     while (!_end) {
       _skipSpTabCrLf();
       if (_currentChar == CharCode.RSQB) break;
@@ -117,13 +117,13 @@ class _EnConfigParser {
     return ya;
   }
 
-  EnMap parseObject({bool isRoot = false}) {
+  EMap parseObject({bool isRoot = false}) {
     _skipSpTab();
     if (!isRoot) {
       _tokenc([CharCode.LCUB]);
       _skipSpTabCrLf();
     }
-    EnMap yo = EnMap();
+    EMap yo = EMap();
     while (!_end) {
       _skipSpTab();
       if (_end) break;
@@ -333,11 +333,11 @@ class _EnConfigParser {
   }
 }
 
-class EnMap extends EnValue with Iterable<MapEntry<String, EnValue>> {
-  Map<String, EnValue> data = {};
+class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
+  Map<String, EValue> data = {};
 
   @override
-  Iterator<MapEntry<String, EnValue>> get iterator => data.entries.iterator;
+  Iterator<MapEntry<String, EValue>> get iterator => data.entries.iterator;
 
   @override
   String toString() {
@@ -377,8 +377,8 @@ class EnMap extends EnValue with Iterable<MapEntry<String, EnValue>> {
   }
 }
 
-class EnList extends EnValue with Iterable<EnValue> {
-  List<EnValue> data = [];
+class EList extends EValue with Iterable<EValue> {
+  List<EValue> data = [];
 
   List<bool> get boolList {
     return data.mapList((e) => e.asBool?.data).nonNullList;
@@ -397,7 +397,7 @@ class EnList extends EnValue with Iterable<EnValue> {
   }
 
   @override
-  Iterator<EnValue> get iterator => data.iterator;
+  Iterator<EValue> get iterator => data.iterator;
 
   @override
   String toString() {
@@ -419,7 +419,7 @@ class EnList extends EnValue with Iterable<EnValue> {
   @override
   void serializePretty(StringBuffer buf, int ident) {
     buf.writeCharCode(CharCode.LSQB);
-    bool needIdent = data.firstOrNull is EnList || data.firstOrNull is EnMap;
+    bool needIdent = data.firstOrNull is EList || data.firstOrNull is EMap;
     bool first = true;
     for (var e in data) {
       if (!first) buf.write(", ");
@@ -432,7 +432,7 @@ class EnList extends EnValue with Iterable<EnValue> {
   }
 }
 
-class EnString extends EnValue implements Comparable<String> {
+class EnString extends EValue implements Comparable<String> {
   String data;
 
   EnString(this.data);
@@ -465,7 +465,7 @@ class EnString extends EnValue implements Comparable<String> {
   }
 }
 
-class EnInt extends EnValue implements Comparable<int> {
+class EnInt extends EValue implements Comparable<int> {
   int data;
 
   EnInt(this.data);
@@ -491,7 +491,7 @@ class EnInt extends EnValue implements Comparable<int> {
   }
 }
 
-class EnDouble extends EnValue implements Comparable<double> {
+class EnDouble extends EValue implements Comparable<double> {
   double data;
 
   EnDouble(this.data);
@@ -517,7 +517,7 @@ class EnDouble extends EnValue implements Comparable<double> {
   }
 }
 
-class EnBool extends EnValue {
+class EnBool extends EValue {
   bool data;
 
   EnBool(this.data);
@@ -538,7 +538,7 @@ class EnBool extends EnValue {
   }
 }
 
-class EnNull extends EnValue {
+class EnNull extends EValue {
   EnNull._();
 
   @override
@@ -559,10 +559,10 @@ class EnNull extends EnValue {
   static EnNull inst = EnNull._();
 }
 
-abstract class EnValue {
-  EnMap? get asMap => this.castTo();
+abstract class EValue {
+  EMap? get asMap => this.castTo();
 
-  EnList? get asList => this.castTo();
+  EList? get asList => this.castTo();
 
   EnString? get asString => this.castTo();
 
@@ -609,17 +609,17 @@ abstract class EnValue {
     return serialize(pretty: false);
   }
 
-  EnValue path(String path, {String sep = "."}) {
+  EValue path(String path, {String sep = "."}) {
     assert(sep.isNotEmpty);
     return paths(path.split(sep).map((e) => e.trim()).toList());
   }
 
-  EnValue paths(List<String> path) {
+  EValue paths(List<String> path) {
     if (path.isEmpty) return this;
     switch (this) {
-      case EnMap ymap:
+      case EMap ymap:
         return ymap[path.first].paths(path.sublist(1));
-      case EnList yList:
+      case EList yList:
         return yList[path.first.toInt!].paths(path.sublist(1));
       default:
         return EnNull.inst;
@@ -636,20 +636,20 @@ abstract class EnValue {
       this[paths.first] = _toEnValue(value);
       return true;
     }
-    EnValue v = this[paths.first];
+    EValue v = this[paths.first];
     if (v is EnNull) {
-      if (this is EnMap) {
-        this[paths.first] = EnMap(); //auto create
+      if (this is EMap) {
+        this[paths.first] = EMap(); //auto create
       }
     }
     return this[paths.first].setPaths(paths.sublist(1), value);
   }
 
-  EnValue operator [](Object key) {
+  EValue operator [](Object key) {
     switch (this) {
-      case EnMap em:
+      case EMap em:
         return em.data[key.toString()] ?? EnNull.inst;
-      case EnList el:
+      case EList el:
         if (key is int) {
           return el.data[key];
         } else if (key is String) {
@@ -664,14 +664,14 @@ abstract class EnValue {
 
   void operator []=(Object key, Object? value) {
     switch (this) {
-      case EnMap em:
+      case EMap em:
         String kk = key.toString();
         if (value == null) {
           em.data.remove(kk);
         } else {
           em.data[kk] = _toEnValue(value);
         }
-      case EnList el:
+      case EList el:
         int? idx = key is int ? key : (key is String ? key.toInt : null);
         if (idx == null) raise("index error: $key");
         if (value == null) {
@@ -685,9 +685,9 @@ abstract class EnValue {
     }
   }
 
-  EnValue _toEnValue(Object value) {
+  EValue _toEnValue(Object value) {
     switch (value) {
-      case EnValue ev:
+      case EValue ev:
         return ev;
       case bool b:
         return EnBool(b);
@@ -704,10 +704,10 @@ abstract class EnValue {
   }
 }
 
-class EnError implements Exception {
+class EError implements Exception {
   dynamic message;
 
-  EnError(this.message);
+  EError(this.message);
 
   @override
   String toString() {
