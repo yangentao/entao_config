@@ -130,8 +130,8 @@ String _codesToString(List<int> charList) {
   return unescapeCharCodes(charList, map: _unescapeChars);
 }
 
-final Map<int, int> _unescapeChars = _escapeChars.map((k, v) => MapEntry(v, k));
-const Map<int, int> _escapeChars = {
+final Map<int, int> _escapeChars = _unescapeChars.map((k, v) => MapEntry(v, k));
+const Map<int, int> _unescapeChars = {
   CharCode.BSLASH: CharCode.BSLASH,
   CharCode.SQUOTE: CharCode.SQUOTE,
   CharCode.QUOTE: CharCode.QUOTE,

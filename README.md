@@ -3,6 +3,7 @@
 String? , List, Map
 @include, @if, @end, @null, @empty 
 .@add, .@remove, .@1, .@2, .@3
+@"this is raw string"
 
 ```
 @include: default.config
