@@ -63,6 +63,11 @@ class EList extends EValue with Iterable<EValue> {
     }
   }
 
+  EList add(Object? value) {
+    data.add(_toEValue(value));
+    return this;
+  }
+
   @override
   EValue operator [](Object key) {
     return data.getOr(_intKey(key)) ?? nullValue;
@@ -99,18 +104,6 @@ class EList extends EValue with Iterable<EValue> {
         first = false;
         if (p) buf.indentLine;
         e._serializeTo(buf, pretty: p);
-        // switch (e) {
-        //   case ENull en:
-        //     if (p) buf.indentLine;
-        //     en.serializeTo(buf, pretty: p);
-        //   case EString es:
-        //     if (p) buf.indentLine;
-        //     es.serializeTo(buf, pretty: p);
-        //   case EList el:
-        //     el.serializeTo(buf, pretty: p);
-        //   case EMap em:
-        //     em.serializeTo(buf, pretty: p);
-        // }
       }
     }, indent: p);
   }

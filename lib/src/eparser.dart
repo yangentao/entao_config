@@ -1,16 +1,16 @@
 part of 'econfig.dart';
 
-//  \, ", ',  ',',  CR, LF, =, :
 class _EParser {
   static final Set<int> _ASSIGN = {CharCode.COLON, CharCode.EQUAL};
   static final Set<int> _LN_COMMA = {CharCode.CR, CharCode.LF, CharCode.COMMA};
   static final Set<int> _WHITE_COMMA = {CharCode.SP, CharCode.HTAB, CharCode.CR, CharCode.LF, CharCode.COMMA};
   final TextScanner ts;
+  final String cwd;
 
-  _EParser(String text) : ts = TextScanner(text);
+  _EParser(String text, {this.cwd = ""}) : ts = TextScanner(text);
 
-  Map<String, dynamic> parse() {
-    Map<String, dynamic> map = {};
+  EMap parse() {
+    EMap map = EMap();
     while (ts.notEnd) {
       ts.skipWhites();
       if (ts.isEnd) break;
@@ -49,9 +49,9 @@ class _EParser {
     }
   }
 
-  Map<String, dynamic> parseObject() {
+  EMap parseObject() {
     ts.skipWhites();
-    Map<String, dynamic> map = {};
+    EMap map = EMap();
     ts.expectChar(CharCode.LCUB);
     ts.skipWhites();
     while (ts.nowChar != null && ts.nowChar != CharCode.RCUB) {
@@ -71,9 +71,9 @@ class _EParser {
     return map;
   }
 
-  List<dynamic> parseArray() {
+  EList parseArray() {
     ts.skipWhites();
-    List<dynamic> list = [];
+    EList list = EList();
     ts.expectChar(CharCode.LSQB);
     while (ts.nowChar != CharCode.RSQB) {
       ts.skipWhites();
