@@ -3,6 +3,6 @@
 /// More dartdocs go here.
 library;
 
-export 'src/entao_config_base.dart';
+export 'src/econfig.dart';
 
 // TODO: Export any libraries intended for clients of this package.
