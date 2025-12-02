@@ -48,6 +48,21 @@ class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
     }, indent: pretty);
   }
 
+  String toFileContent() {
+    IndentBuffer buf = IndentBuffer();
+    bool first = true;
+    for (var e in data.entries) {
+      if (!first) {
+        buf.newLine;
+      }
+      first = false;
+      buf.write(e.key);
+      buf.write(":");
+      e.value._serializeTo(buf, pretty: true);
+    }
+    return buf.toString();
+  }
+
   @override
   String toString() {
     return serialize(pretty: false);

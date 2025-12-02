@@ -16,7 +16,7 @@ void main() {
 
     test('t1', () {
       EMap map = EConfig.parse(text);
-      println(map.serialize(pretty: true));
+      println(map.toFileContent());
       expect(map['host'].stringValue, 'https://pub.dev');
       expect(map['port'].intValue, 443);
       expect(map['methods'].listString, equals(["GET", "POST", "HEAD"]));
