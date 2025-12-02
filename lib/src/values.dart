@@ -1,4 +1,4 @@
-part of 'config.dart';
+part of 'econfig.dart';
 
 class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
   final Map<String, EValue> data = {};
@@ -139,9 +139,7 @@ class EString extends EValue implements Comparable<String> {
 
   @override
   void _serializeTo(IndentBuffer buf, {bool pretty = false}) {
-    // buf.writeCharCode(CharCode.QUOTE);
-    buf << escapeText(data, map: _stringEscapes);
-    // buf.writeCharCode(CharCode.QUOTE);
+    buf << escapeText(data, map: _escapeChars);
   }
 
   @override
@@ -290,4 +288,3 @@ extension _StringBufferExt on StringBuffer {
 }
 
 final List<String> _trues = const ["1", "true", "yes"];
-Map<int, int> _stringEscapes = const {CharCode.BSLASH: CharCode.BSLASH, CharCode.QUOTE: CharCode.QUOTE, CharCode.SQUOTE: CharCode.SQUOTE};
