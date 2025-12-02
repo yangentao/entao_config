@@ -13,7 +13,7 @@ class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
 
   @override
   EValue operator [](Object key) {
-    return data[key.toString()] ?? ENull.inst;
+    return data[key.toString()] ?? nullValue;
   }
 
   @override
@@ -29,10 +29,10 @@ class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
   Iterator<MapEntry<String, EValue>> get iterator => data.entries.iterator;
 
   @override
-  int get estimatedSize => this.sumValueBy((e) => e.key.length + e.value.estimatedSize + 1) ?? 2;
+  int get _estimatedSize => this.sumValueBy((e) => e.key.length + e.value._estimatedSize + 1) ?? 2;
 
   @override
-  void serializeTo(IndentBuffer buf, {bool pretty = false}) {
+  void _serializeTo(IndentBuffer buf, {bool pretty = false}) {
     buf.brace(() {
       bool first = true;
       for (var e in data.entries) {
@@ -43,7 +43,7 @@ class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
         if (pretty) buf.indentLine;
         buf.write(e.key);
         buf.write(":");
-        e.value.serializeTo(buf, pretty: pretty);
+        e.value._serializeTo(buf, pretty: pretty);
       }
     }, indent: pretty);
   }
@@ -65,7 +65,7 @@ class EList extends EValue with Iterable<EValue> {
 
   @override
   EValue operator [](Object key) {
-    return data.getOr(_intKey(key)) ?? ENull.inst;
+    return data.getOr(_intKey(key)) ?? nullValue;
   }
 
   @override
@@ -87,18 +87,18 @@ class EList extends EValue with Iterable<EValue> {
   Iterator<EValue> get iterator => data.iterator;
 
   @override
-  int get estimatedSize => this.sumValueBy((e) => e.estimatedSize) ?? 2;
+  int get _estimatedSize => this.sumValueBy((e) => e._estimatedSize) ?? 2;
 
   @override
-  void serializeTo(IndentBuffer buf, {bool pretty = false}) {
-    bool p = pretty && (this.estimatedSize > 80 || any((e) => e is EMap));
+  void _serializeTo(IndentBuffer buf, {bool pretty = false}) {
+    bool p = pretty && (this._estimatedSize > 80 || any((e) => e is EMap));
     buf.bracket(() {
       bool first = true;
       for (var e in data) {
         if (!first) buf.write(", ");
         first = false;
         if (p) buf.indentLine;
-        e.serializeTo(buf, pretty: p);
+        e._serializeTo(buf, pretty: p);
         // switch (e) {
         //   case ENull en:
         //     if (p) buf.indentLine;
@@ -138,7 +138,7 @@ class EString extends EValue implements Comparable<String> {
   }
 
   @override
-  void serializeTo(IndentBuffer buf, {bool pretty = false}) {
+  void _serializeTo(IndentBuffer buf, {bool pretty = false}) {
     // buf.writeCharCode(CharCode.QUOTE);
     buf << escapeText(data, map: _stringEscapes);
     // buf.writeCharCode(CharCode.QUOTE);
@@ -150,15 +150,13 @@ class EString extends EValue implements Comparable<String> {
   }
 
   @override
-  int get estimatedSize => data.length;
+  int get _estimatedSize => data.length;
 }
 
-final ENull nullValue = ENull.inst;
+final ENull nullValue = ENull._();
 
 class ENull extends EValue {
   ENull._();
-
-  static ENull inst = ENull._();
 
   @override
   EValue operator [](Object key) {
@@ -169,10 +167,10 @@ class ENull extends EValue {
   void operator []=(Object key, Object? value) {}
 
   @override
-  int get estimatedSize => 5;
+  int get _estimatedSize => 5;
 
   @override
-  void serializeTo(IndentBuffer buf, {bool pretty = false}) {
+  void _serializeTo(IndentBuffer buf, {bool pretty = false}) {
     buf << "@null";
   }
 }
@@ -180,30 +178,39 @@ class ENull extends EValue {
 sealed class EValue {
   bool get isNull => this is ENull;
 
-  String get asString {
+  bool get boolValue {
+    return _trues.contains(stringValue.toLowerCase());
+  }
+
+  int? get intValue => stringValue.toInt;
+
+  double? get doubleValue => stringValue.toDouble;
+
+  String get stringValue {
     if (this case EString es) return es.data;
+    if (this is ENull) return "";
     raise("NOT a string");
   }
 
-  EList get asList {
+  EList get listValue {
     if (this case EList ls) return ls;
     raise("NOT a list");
   }
 
-  EMap get asMap {
+  EMap get mapValue {
     if (this case EMap m) return m;
     raise("NOT a map");
   }
 
-  int get estimatedSize;
+  int get _estimatedSize;
 
   String serialize({bool pretty = false}) {
     var buf = IndentBuffer();
-    serializeTo(buf, pretty: pretty);
+    _serializeTo(buf, pretty: pretty);
     return buf.toString();
   }
 
-  void serializeTo(IndentBuffer buf, {bool pretty = false});
+  void _serializeTo(IndentBuffer buf, {bool pretty = false});
 
   EValue operator [](Object key);
 
@@ -282,4 +289,5 @@ extension _StringBufferExt on StringBuffer {
   }
 }
 
+final List<String> _trues = const ["1", "true", "yes"];
 Map<int, int> _stringEscapes = const {CharCode.BSLASH: CharCode.BSLASH, CharCode.QUOTE: CharCode.QUOTE, CharCode.SQUOTE: CharCode.SQUOTE};
