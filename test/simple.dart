@@ -5,21 +5,24 @@ import 'package:test/test.dart';
 void main() {
   group('Simple', () {
     final String text = r"""
-    
+    # this is comment
     host: https://pub.dev
-    port: 443
+    port: 443 # comment again
     empty:
     methods: [GET,POST,"HEAD"]
     methods2: [GET,POST,HEAD,]
     methods3: [
         GET
-        POST
+        # comment
+        POST # comment
         HEAD
     ]
     services: [
       {
+      # comment
         name:blog
-        fee: false
+        # comment
+        fee: false # comment
       }
       {
         name:repo
@@ -36,9 +39,7 @@ void main() {
     multi line"
     """;
 
-    setUp(() {
-      // Additional setup goes here.
-    });
+
 
     test('t0', () {
       EMap map = EConfig.parse("");

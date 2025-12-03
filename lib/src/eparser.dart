@@ -6,8 +6,8 @@ class _EParser {
   static const Set<int> _WHITE_COMMA = {CharCode.SP, CharCode.HTAB, CharCode.CR, CharCode.LF, CharCode.COMMA};
 
   // static const Set<int> _STR_STOP = {CharCode.CR, CharCode.LF, CharCode.COMMA, CharCode.RCUB, CharCode.RSQB};
-  static const Set<int> _STR_STOP_IN_LIST = {CharCode.CR, CharCode.LF, CharCode.COMMA, CharCode.RSQB};
-  static const Set<int> _STR_STOP_IN_MAP = {CharCode.CR, CharCode.LF, CharCode.COMMA, CharCode.RCUB};
+  static const Set<int> _STR_STOP_IN_LIST = {CharCode.CR, CharCode.LF, CharCode.COMMA, CharCode.SHARP, CharCode.RSQB};
+  static const Set<int> _STR_STOP_IN_MAP = {CharCode.CR, CharCode.LF, CharCode.COMMA, CharCode.SHARP, CharCode.RCUB};
   final TextScanner ts;
   final String? currentDir;
   final Stack<Object> scope = Stack();
@@ -33,6 +33,9 @@ class _EParser {
       if (ts.isEnd) break;
       String key;
       switch (ts.currentChar) {
+        case CharCode.SHARP:
+          _parseComment();
+          continue;
         case CharCode.QUOTE:
           key = _parseStringQuoted().data;
         case CharCode.AT:
@@ -78,6 +81,11 @@ class _EParser {
     }
     scope.pop();
     return map;
+  }
+
+  void _parseComment() {
+    ts.expectChar(CharCode.SHARP, escapeChar: CharCode.BSLASH);
+    ts.moveUntil(CharCode.CR_LF, escapeChar: CharCode.BSLASH);
   }
 
   bool _cmpString(EValue ev, String op, dynamic value) {
@@ -320,12 +328,17 @@ class _EParser {
   }
 
   EList _parseArray() {
-    ts.skipWhites();
     EList list = EList();
     scope.push(list);
+    ts.skipWhites();
     ts.expectChar(CharCode.LSQB);
+    ts.skipWhites();
     while (ts.nowChar != CharCode.RSQB) {
-      ts.skipWhites();
+      if (ts.currentChar == CharCode.SHARP) {
+        _parseComment();
+        ts.skipWhites();
+        continue;
+      }
       dynamic v = _parseValue();
       list.add(v);
       List<int> trails = ts.skipChars(_WHITE_COMMA);
@@ -354,6 +367,9 @@ class _EParser {
   String _parseString() {
     Set<int> untilSet = scope.peek() is EMap ? _STR_STOP_IN_MAP : _STR_STOP_IN_LIST;
     List<int> charList = ts.moveUntil(untilSet, escapeChar: CharCode.BSLASH);
+    if (ts.nowChar == CharCode.SHARP) {
+      _parseComment();
+    }
     if (charList.isEmpty) return "";
     String s = _codesToString(charList);
     return s.trim();
@@ -392,10 +408,10 @@ const Map<int, int> _unescapeChars = {
   CharCode.EQUAL: CharCode.EQUAL,
   CharCode.COLON: CharCode.COLON,
   CharCode.COMMA: CharCode.COMMA,
-  CharCode.LCUB: CharCode.LCUB,
   CharCode.RCUB: CharCode.RCUB,
-  CharCode.LSQB: CharCode.LSQB,
   CharCode.RSQB: CharCode.RSQB,
+  // CharCode.LCUB: CharCode.LCUB,
+  // CharCode.LSQB: CharCode.LSQB,
 };
 
 extension _StringIsNumExt on String {
