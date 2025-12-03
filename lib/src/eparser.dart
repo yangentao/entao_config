@@ -395,8 +395,8 @@ const String _AT_REMOVE = "@remove";
 final Map<int, int> _escapeChars = _unescapeChars.map((k, v) => MapEntry(v, k));
 const Map<int, int> _unescapeChars = {
   CharCode.BSLASH: CharCode.BSLASH,
-  CharCode.SQUOTE: CharCode.SQUOTE,
-  // CharCode.QUOTE: CharCode.QUOTE,
+  // CharCode.SQUOTE: CharCode.SQUOTE,
+  CharCode.QUOTE: CharCode.QUOTE,
   CharCode.NUM0: CharCode.NUL,
   CharCode.BEL: CharCode.BEL,
   CharCode.b: CharCode.BS,
