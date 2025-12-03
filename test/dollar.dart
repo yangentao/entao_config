@@ -25,6 +25,7 @@ void main() {
     $empty: @empty
     empty2: @empty
     $methods.-1 = PUT
+    rawstr: "@remove"
     """;
 
     setUp(() {
@@ -47,6 +48,7 @@ void main() {
       expect(map['temp'].isNull, isTrue);
       expect(map['empty'].stringValue, "");
       expect(map['empty2'].stringValue, "");
+      expect(map['rawstr'].stringValue, "@remove");
 
       // println(map['services.name'].runtimeType);
       // println(map['services.name'].stringValue);

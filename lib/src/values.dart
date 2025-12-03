@@ -231,7 +231,16 @@ class EString extends EValue implements Comparable<String> {
 
   @override
   void _serializeTo(IndentBuffer buf, {bool pretty = false}) {
-    buf << escapeText(data, map: _escapeChars);
+    switch (data) {
+      case _AT_NULL:
+        buf << data.quoted;
+      case _AT_EMPTY:
+        buf << data.quoted;
+      case _AT_REMOVE:
+        buf << data.quoted;
+      default:
+        buf << escapeText(data, map: _escapeChars);
+    }
   }
 
   @override
@@ -267,7 +276,7 @@ class ENull extends EValue {
 
   @override
   void _serializeTo(IndentBuffer buf, {bool pretty = false}) {
-    buf << "@null";
+    buf << _AT_NULL;
   }
 }
 

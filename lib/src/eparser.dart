@@ -34,7 +34,7 @@ class _EParser {
       String key;
       switch (ts.currentChar) {
         case CharCode.QUOTE:
-          key = _parseStringQuoted();
+          key = _parseStringQuoted().data;
         case CharCode.AT:
           if (ts.peek("@if ")) {
             ts.skip(size: 4);
@@ -82,10 +82,10 @@ class _EParser {
 
   bool _cmpString(EValue ev, String op, dynamic value) {
     if (ev is! EString) return false;
-    if (value is! String) return false;
+    if (value is! String && value is! EString) return false;
     String s1 = ev.data;
-    String s2 = value;
-    if (s1.allNum && s2.allNum) {
+    String s2 = value is String ? value : (value is EString ? value.data : _raise("NOT a string"));
+    if (value is String && s1.allNum && s2.allNum) {
       if (s1.contains(".") || s2.contains(".")) {
         double? d1 = s1.toDouble;
         double? d2 = s2.toDouble;
@@ -140,10 +140,14 @@ class _EParser {
       if (op == "@=") {
         if (value is String) {
           return ev.data.contains(value);
+        }else if(value is EString){
+          return ev.data.contains(value.data);
         }
       } else if (op == "=@") {
         if (value is String) {
           return value.contains(ev.data);
+        } else if(value is EString){
+          return value.data.contains(ev.data);
         } else if (value is EList) {
           return value.any((a) => a.equal(ev));
         } else if (value is EMap) {
@@ -155,6 +159,8 @@ class _EParser {
       if (op == "@=") {
         if (value is String) {
           return ev.any((a) => a.equal(value));
+        }else if(value is EString){
+          return ev.any((a) => a.equal(value.data));
         } else if (value is EList) {
           for (final a in value.data) {
             if (!ev.any((b) => b.equal(a))) return false;
@@ -174,6 +180,8 @@ class _EParser {
       if (op == "@=") {
         if (value is String) {
           return ev.data.containsKey(value);
+        }else if(value is EString){
+          return ev.data.containsKey(value.data);
         }
       }
     }
@@ -270,18 +278,18 @@ class _EParser {
     // println("assign, ", key, value);
     String firstChar = key[0];
     if (firstChar == "@") {
-      if (key == "@include") {
-        _include(emap, key, value);
+      if (key == _AT_INCLUDE) {
+        _include(emap, key, value is EString ? value.data : value );
       }
       return;
     }
     String newKey = firstChar == r"$" ? key.substring(1) : key;
     switch (value) {
-      case "@null":
+      case _AT_NULL:
         emap.setPath(newKey, nullValue);
-      case "@empty":
+      case _AT_EMPTY:
         emap.setPath(newKey, "");
-      case "@remove":
+      case _AT_REMOVE:
         emap.removePath(newKey);
       default:
         emap.setPath(newKey, value);
@@ -335,12 +343,12 @@ class _EParser {
     return String.fromCharCodes(buf);
   }
 
-  String _parseStringQuoted() {
+  EString _parseStringQuoted() {
     ts.expectChar(CharCode.QUOTE);
     List<int> charList = ts.moveUntilChar(CharCode.QUOTE, escapeChar: CharCode.BSLASH);
     String s = _codesToString(charList);
     ts.expectChar(CharCode.QUOTE);
-    return s;
+    return EString(s);
   }
 
   String _parseString() {
@@ -359,19 +367,24 @@ class _EParser {
 String _codesToString(List<int> charList) {
   return unescapeCharCodes(charList, map: _unescapeChars);
 }
+const String _AT_INCLUDE = "@include";
+const String _AT_NULL = "@null";
+const String _AT_EMPTY = "@empty";
+const String _AT_REMOVE = "@remove";
+
 
 final Map<int, int> _escapeChars = _unescapeChars.map((k, v) => MapEntry(v, k));
 const Map<int, int> _unescapeChars = {
   CharCode.BSLASH: CharCode.BSLASH,
   CharCode.SQUOTE: CharCode.SQUOTE,
-  CharCode.QUOTE: CharCode.QUOTE,
+  // CharCode.QUOTE: CharCode.QUOTE,
   CharCode.NUM0: CharCode.NUL,
   CharCode.BEL: CharCode.BEL,
   CharCode.b: CharCode.BS,
   CharCode.t: CharCode.HTAB,
   CharCode.r: CharCode.CR,
   CharCode.n: CharCode.LF,
-  CharCode.SEMI: CharCode.SEMI,
+  // CharCode.SEMI: CharCode.SEMI,
   CharCode.SHARP: CharCode.SHARP,
   CharCode.EQUAL: CharCode.EQUAL,
   CharCode.COLON: CharCode.COLON,
@@ -380,7 +393,6 @@ const Map<int, int> _unescapeChars = {
   CharCode.RCUB: CharCode.RCUB,
   CharCode.LSQB: CharCode.LSQB,
   CharCode.RSQB: CharCode.RSQB,
-  CharCode.AT: CharCode.AT,
 };
 
 extension _StringIsNumExt on String {

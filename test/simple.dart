@@ -9,7 +9,7 @@ void main() {
     host: https://pub.dev
     port: 443
     empty:
-    methods: [GET,POST,HEAD]
+    methods: [GET,POST,"HEAD"]
     methods2: [GET,POST,HEAD,]
     methods3: [
         GET
