@@ -11,6 +11,7 @@ void main() {
     empty:
     methods: [GET,POST,"HEAD"]
     methods2: [GET,POST,HEAD,]
+    # this is comment
     methods3: [
         GET
         # comment
