@@ -36,7 +36,7 @@ class _EParser {
         case CharCode.QUOTE:
           key = _parseStringQuoted().data;
         case CharCode.AT:
-          if (ts.peek("@if ")) {
+          if (ts.peek("$_AT_IF ")) {
             ts.skip(size: 4);
             ts.skipSpTab();
             key = _parseKey();
@@ -46,14 +46,14 @@ class _EParser {
             dynamic v = _parseValue();
             _ifProcess(map, key, opList[index], v);
             continue;
-          } else if (ts.peek("@end")) {
+          } else if (ts.peek(_AT_END)) {
             ts.skip(size: 4);
             if (ts.notEnd) ts.expectAnyChar(CharCode.SP_TAB_CR_LF);
             continue;
-          } else if (ts.peek("@else")) {
+          } else if (ts.peek(_AT_ELSE)) {
             ts.skip(size: 5);
             ts.expectAnyChar(CharCode.SP_TAB_CR_LF);
-            ts.moveUntilString("@end", escapeChar: CharCode.BSLASH);
+            ts.moveUntilString(_AT_END, escapeChar: CharCode.BSLASH);
             ts.skip(size: 4);
             if (ts.notEnd) ts.expectAnyChar(CharCode.SP_TAB_CR_LF);
             continue;
@@ -140,13 +140,13 @@ class _EParser {
       if (op == "@=") {
         if (value is String) {
           return ev.data.contains(value);
-        }else if(value is EString){
+        } else if (value is EString) {
           return ev.data.contains(value.data);
         }
       } else if (op == "=@") {
         if (value is String) {
           return value.contains(ev.data);
-        } else if(value is EString){
+        } else if (value is EString) {
           return value.data.contains(ev.data);
         } else if (value is EList) {
           return value.any((a) => a.equal(ev));
@@ -159,7 +159,7 @@ class _EParser {
       if (op == "@=") {
         if (value is String) {
           return ev.any((a) => a.equal(value));
-        }else if(value is EString){
+        } else if (value is EString) {
           return ev.any((a) => a.equal(value.data));
         } else if (value is EList) {
           for (final a in value.data) {
@@ -180,7 +180,7 @@ class _EParser {
       if (op == "@=") {
         if (value is String) {
           return ev.data.containsKey(value);
-        }else if(value is EString){
+        } else if (value is EString) {
           return ev.data.containsKey(value.data);
         }
       }
@@ -206,7 +206,7 @@ class _EParser {
     }
 
     if (!result) {
-      int n = ts.moveUntilAnyString(const ["@else", "@end"], escapeChar: CharCode.BSLASH);
+      int n = ts.moveUntilAnyString(const [_AT_ELSE, _AT_END], escapeChar: CharCode.BSLASH);
       if (n < 0) {
         raise("@if but no @else or @end");
       }
@@ -279,7 +279,7 @@ class _EParser {
     String firstChar = key[0];
     if (firstChar == "@") {
       if (key == _AT_INCLUDE) {
-        _include(emap, key, value is EString ? value.data : value );
+        _include(emap, key, value is EString ? value.data : value);
       }
       return;
     }
@@ -367,11 +367,14 @@ class _EParser {
 String _codesToString(List<int> charList) {
   return unescapeCharCodes(charList, map: _unescapeChars);
 }
+
 const String _AT_INCLUDE = "@include";
+const String _AT_IF = "@if";
+const String _AT_ELSE = "@else";
+const String _AT_END = "@end";
 const String _AT_NULL = "@null";
 const String _AT_EMPTY = "@empty";
 const String _AT_REMOVE = "@remove";
-
 
 final Map<int, int> _escapeChars = _unescapeChars.map((k, v) => MapEntry(v, k));
 const Map<int, int> _unescapeChars = {
