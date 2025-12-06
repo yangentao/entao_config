@@ -10,7 +10,7 @@ class _EParser {
   static const Set<int> _STR_STOP_IN_MAP = {CharCode.CR, CharCode.LF, CharCode.COMMA, CharCode.SHARP, CharCode.RCUB};
   final TextScanner ts;
   final String? currentDir;
-  final Stack<Object> scope = Stack();
+  final EStack<Object> scope = EStack();
 
   // ignore: unused_element_parameter
   _EParser(String text, {this.currentDir}) : ts = TextScanner(text);
