@@ -13,6 +13,17 @@ class EConfig {
 
   static void Function(String) errorLog = (s) => stderr.writeln(s);
 
+  static void save(EMap map, {required File file, Encoding encoding = utf8}) {
+    String s = map.toFileContent();
+    file.writeAsStringSync(s, encoding: encoding);
+  }
+
+  static EMap load(File file, {Encoding encoding = utf8}) {
+    String s = file.readAsStringSync(encoding: encoding);
+    return _EParser(s, currentDir: pathUtil.dirname(file.path)).parse();
+  }
+
+  @Deprecated('Use load() instead.')
   static EMap parseFile(File file, {Encoding encoding = utf8}) {
     String s = file.readAsStringSync(encoding: encoding);
     return _EParser(s, currentDir: pathUtil.dirname(file.path)).parse();

@@ -10,6 +10,9 @@ class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
       }
     }
   }
+  void save(File file, {Encoding encoding = utf8}){
+    EConfig.save(this , file: file, encoding: encoding);
+  }
 
   @override
   int get length => data.length;
@@ -71,7 +74,9 @@ class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
       bool first = true;
       for (var e in data.entries) {
         if (!first) {
-          buf.write(", ");
+          if (!pretty) {
+            buf.write(", ");
+          }
         }
         first = false;
         if (pretty) buf.indentLine;
@@ -177,15 +182,15 @@ class EList extends EValue with Iterable<EValue> {
   Iterator<EValue> get iterator => data.iterator;
 
   @override
-  int get _estimatedSize => this.sumValueBy((e) => e._estimatedSize) ?? 2;
+  int get _estimatedSize => this.sumValueBy((e) => e._estimatedSize + 2) ?? 2;
 
   @override
   void _serializeTo(IndentBuffer buf, {bool pretty = false}) {
-    bool p = pretty && (this._estimatedSize > 80 || any((e) => e is EMap));
+    bool p = pretty && (this._estimatedSize > 60 || any((e) => e is EMap));
     buf.bracket(() {
       bool first = true;
       for (var e in data) {
-        if (!first) buf.write(", ");
+        if (!first && !p) buf.write(", ");
         first = false;
         if (p) buf.indentLine;
         e._serializeTo(buf, pretty: p);
