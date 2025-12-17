@@ -238,7 +238,7 @@ class _EParser {
   }
 
   Encoding _includeCharset(EMap em) {
-    String? charset = em['charset'].string;
+    String? charset = em['charset'].stringOpt;
     if (charset == null || charset.isEmpty) return utf8;
     if (charset == "system") return systemEncoding;
     return Encoding.getByName(charset) ?? utf8;
@@ -248,7 +248,7 @@ class _EParser {
     if (value case String s) {
       File? file = _includeFile(s.trim());
       if (file != null) {
-        EMap inMap = EConfig.parseFile(file);
+        EMap inMap = EConfig.load(file);
         emap.data.addAll(inMap.data);
       } else {
         _loge("read file error: $s");
@@ -256,7 +256,7 @@ class _EParser {
       return;
     }
     if (value case EMap em) {
-      String? filename = em['file'].string;
+      String? filename = em['file'].stringOpt;
       if (filename == null) {
         _loge("no file name in @include params");
         return;
@@ -266,7 +266,7 @@ class _EParser {
         _loge("read file error: $filename");
         return;
       }
-      EMap inMap = EConfig.parseFile(file, encoding: _includeCharset(em));
+      EMap inMap = EConfig.load(file, encoding: _includeCharset(em));
       List<String>? keys = em['keys'].list?.strings;
       List<String>? excludes = em['excludes'].list?.strings;
       Set<String> keySet = inMap.data.keys.toSet();
