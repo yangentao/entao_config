@@ -51,7 +51,7 @@ void main() {
       println(map.toFileContent());
 
       expect(map['host'].string, 'https://pub.dev');
-      expect(map['port'].text?.intValue, 443);
+      expect(map['port'].intValue, 443);
       expect(map['empty'].string!.isEmpty, true);
 
       expect(map['methods'].list?.strings, equals(["GET", "POST", "HEAD"]));
@@ -67,10 +67,10 @@ void main() {
       expect(map.path('methods.2').string, equals("HEAD"));
 
       expect(map.path('services.0.name').string, equals("blog"));
-      expect(map.path('services.0.fee').text?.boolOpt, equals(false));
+      expect(map.path('services.0.fee').boolOpt, equals(false));
 
       expect(map.path('services.1.name').string, equals("repo"));
-      expect(map.path('services.1.fee').text?.boolOpt, equals(true));
+      expect(map.path('services.1.fee').boolOpt, equals(true));
       expect(map.path('services.0').map_?.stringMap, equals({"name": "blog", "fee": "false"}));
 
       expect(map['names'].list?.strings, equals(["a", "b{}"]));

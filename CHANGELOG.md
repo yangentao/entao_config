@@ -5,3 +5,6 @@
 
 ## 1.0.2
 * prety format
+
+## 1.1.0
+* xxxValue, intValue, boolValue...

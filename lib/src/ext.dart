@@ -1,51 +1,19 @@
 part of 'econfig.dart';
 
 extension EMapExt on EMap {
-  String stringValue(String key, {String absent = ""}) => this[key].string ?? absent;
-
-  String? stringOpt(String key) => this[key].string;
-
-  bool boolValue(String key, {bool absent = false}) => this[key].text?.boolOpt ?? absent;
-
-  bool? boolOpt(String key) => this[key].text?.boolOpt;
-
-  int intValue(String key, {int absent = 0}) => this[key].text?.intValue ?? absent;
-
-  int? intOpt(String key) => this[key].text?.intOpt;
-
-  double doubleValue(String key, {double absent = 0}) => this[key].text?.doubleValue ?? absent;
-
-  double? doubleOpt(String key) => this[key].text?.doubleOpt;
-
   Map<String, String> get stringMap {
     return data.map((k, v) => MapEntry(k, (v as EText).data));
   }
 }
 
 extension EListExt on EList {
-  List<String> get strings => this.mapList((e) => e.text!.string);
+  List<String> get strings => this.mapList((e) => e.string);
 
-  List<int> get ints => this.mapList((e) => e.text!.intValue);
+  List<int> get ints => this.mapList((e) => e.intValue);
 
-  List<double> get doubles => this.mapList((e) => e.text!.doubleValue);
+  List<double> get doubles => this.mapList((e) => e.doubleValue);
 
-  List<bool> get bools => this.mapList((e) => e.text!.boolValue);
-}
-
-extension ETextExt on EText {
-  String get string => data;
-
-  bool get boolValue => bool.parse(data);
-
-  bool? get boolOpt => bool.tryParse(data, caseSensitive: false);
-
-  int get intValue => int.parse(data);
-
-  int? get intOpt => int.tryParse(data);
-
-  double get doubleValue => double.parse(data);
-
-  double? get doubleOpt => double.tryParse(data);
+  List<bool> get bools => this.mapList((e) => e.boolValue);
 }
 
 extension EValueExt on EValue {
@@ -61,13 +29,25 @@ extension EValueExt on EValue {
     return null;
   }
 
-  EText? get text {
-    if (this case EText s) return s;
-    return null;
+  String get string {
+    if (this case EText es) return es.data;
+    return "";
   }
 
-  String? get string {
+  String? get stringOpt {
     if (this case EText es) return es.data;
     return null;
   }
+
+  bool get boolValue => stringOpt?.let((s) => bool.parse(s)) ?? false;
+
+  bool? get boolOpt => stringOpt?.let((s) => bool.tryParse(s));
+
+  int get intValue => stringOpt?.let((s) => int.parse(s)) ?? 0;
+
+  int? get intOpt => stringOpt?.let((s) => int.tryParse(s));
+
+  double get doubleValue => stringOpt?.let((s) => double.parse(s)) ?? 0;
+
+  double? get doubleOpt => stringOpt?.let((s) => double.tryParse(s));
 }
