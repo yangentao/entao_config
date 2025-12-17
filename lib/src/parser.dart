@@ -89,10 +89,10 @@ class _EParser {
   }
 
   bool _cmpString(EValue ev, String op, dynamic value) {
-    if (ev is! EString) return false;
-    if (value is! String && value is! EString) return false;
+    if (ev is! EText) return false;
+    if (value is! String && value is! EText) return false;
     String s1 = ev.data;
-    String s2 = value is String ? value : (value is EString ? value.data : _raise("NOT a string"));
+    String s2 = value is String ? value : (value is EText ? value.data : _raise("NOT a string"));
     if (value is String && s1.allNum && s2.allNum) {
       if (s1.contains(".") || s2.contains(".")) {
         double? d1 = s1.toDouble;
@@ -144,17 +144,17 @@ class _EParser {
       return ev is ENull;
     }
     if (ev is ENull) return false;
-    if (ev is EString) {
+    if (ev is EText) {
       if (op == "@=") {
         if (value is String) {
           return ev.data.contains(value);
-        } else if (value is EString) {
+        } else if (value is EText) {
           return ev.data.contains(value.data);
         }
       } else if (op == "=@") {
         if (value is String) {
           return value.contains(ev.data);
-        } else if (value is EString) {
+        } else if (value is EText) {
           return value.data.contains(ev.data);
         } else if (value is EList) {
           return value.any((a) => a.equal(ev));
@@ -167,7 +167,7 @@ class _EParser {
       if (op == "@=") {
         if (value is String) {
           return ev.any((a) => a.equal(value));
-        } else if (value is EString) {
+        } else if (value is EText) {
           return ev.any((a) => a.equal(value.data));
         } else if (value is EList) {
           for (final a in value.data) {
@@ -188,7 +188,7 @@ class _EParser {
       if (op == "@=") {
         if (value is String) {
           return ev.data.containsKey(value);
-        } else if (value is EString) {
+        } else if (value is EText) {
           return ev.data.containsKey(value.data);
         }
       }
@@ -238,7 +238,7 @@ class _EParser {
   }
 
   Encoding _includeCharset(EMap em) {
-    String? charset = em['charset'].stringValue;
+    String? charset = em['charset'].string;
     if (charset == null || charset.isEmpty) return utf8;
     if (charset == "system") return systemEncoding;
     return Encoding.getByName(charset) ?? utf8;
@@ -256,7 +256,7 @@ class _EParser {
       return;
     }
     if (value case EMap em) {
-      String? filename = em['file'].stringValue;
+      String? filename = em['file'].string;
       if (filename == null) {
         _loge("no file name in @include params");
         return;
@@ -267,8 +267,8 @@ class _EParser {
         return;
       }
       EMap inMap = EConfig.parseFile(file, encoding: _includeCharset(em));
-      List<String>? keys = em['keys'].stringList;
-      List<String>? excludes = em['excludes'].stringList;
+      List<String>? keys = em['keys'].list?.strings;
+      List<String>? excludes = em['excludes'].list?.strings;
       Set<String> keySet = inMap.data.keys.toSet();
       if (keys != null && keys.isNotEmpty) {
         keySet.retainAll(keys);
@@ -287,7 +287,7 @@ class _EParser {
     String firstChar = key[0];
     if (firstChar == "@") {
       if (key == _AT_INCLUDE) {
-        _include(emap, key, value is EString ? value.data : value);
+        _include(emap, key, value is EText ? value.data : value);
       }
       return;
     }
@@ -356,12 +356,12 @@ class _EParser {
     return String.fromCharCodes(buf);
   }
 
-  EString _parseStringQuoted() {
+  EText _parseStringQuoted() {
     ts.expectChar(CharCode.QUOTE);
     List<int> charList = ts.moveUntilChar(CharCode.QUOTE, escapeChar: CharCode.BSLASH);
     String s = _codesToString(charList);
     ts.expectChar(CharCode.QUOTE);
-    return EString(s);
+    return EText(s);
   }
 
   String _parseString() {

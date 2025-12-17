@@ -36,19 +36,19 @@ void main() {
       EMap map = EConfig.parse(text);
       println(map.toFileContent());
 
-      expect(map['methods'][0].stringValue, equals("GGEETT"));
-      expect(map['methods'][1].stringValue, equals("POST"));
-      expect(map['methods'][2].stringValue, equals("HEAD"));
-      expect(map['methods'].stringList, equals(["GGEETT", "POST", "HEAD", "PUT"]));
+      expect(map['methods'][0].string, equals("GGEETT"));
+      expect(map['methods'][1].string, equals("POST"));
+      expect(map['methods'][2].string, equals("HEAD"));
+      expect(map['methods'].list?.strings, equals(["GGEETT", "POST", "HEAD", "PUT"]));
 
-      expect(map['services.name'].stringValue, equals("blogger"));
-      expect(map.path("services.area.city").stringValue, equals("Washington"));
+      expect(map['services.name'].string, equals("blogger"));
+      expect(map.path("services.area.city").string, equals("Washington"));
       expect(map['services.fee'].isNull, isTrue);
-      expect(map['services.addr'].stringValue, "US");
+      expect(map['services.addr'].string, "US");
       expect(map['temp'].isNull, isTrue);
-      expect(map['empty'].stringValue, "");
-      expect(map['empty2'].stringValue, "");
-      expect(map['rawstr'].stringValue, "@remove");
+      expect(map['empty'].string, "");
+      expect(map['empty2'].string, "");
+      expect(map['rawstr'].string, "@remove");
 
       // println(map['services.name'].runtimeType);
       // println(map['services.name'].stringValue);

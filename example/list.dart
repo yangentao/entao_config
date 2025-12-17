@@ -2,7 +2,7 @@ import 'package:entao_config/entao_config.dart';
 import 'package:println/println.dart';
 
 void main() {
-  EString es = EString("Hello");
+  EText es = EText("Hello");
   println(es.toString());
   println(nullValue);
 

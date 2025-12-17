@@ -5,13 +5,18 @@ import 'package:entao_config/src/IndentBuffer.dart';
 import 'package:entao_dutil/entao_dutil.dart';
 import 'package:path/path.dart' as pathUtil;
 
-part 'eparser.dart';
+part 'parser.dart';
+part 'ext.dart';
 part 'values.dart';
 
 class EConfig {
   EConfig._();
 
   static void Function(String) errorLog = (s) => stderr.writeln(s);
+  static void Function(String) requireFailed = (s) {
+    stderr.writeln(s);
+    exit(-1);
+  };
 
   static void save(EMap map, {required File file, Encoding encoding = utf8}) {
     String s = map.toFileContent();

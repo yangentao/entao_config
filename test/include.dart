@@ -17,8 +17,8 @@ void main() {
       EMap map = EConfig.parse(text);
       println(map.toFileContent());
 
-      expect(map['methods'][1].stringValue, equals("POST"));
-      expect(map['methods'][2].stringValue, equals("HEAD"));
+      expect(map['methods'][1].string, equals("POST"));
+      expect(map['methods'][2].string, equals("HEAD"));
     });
   });
 }

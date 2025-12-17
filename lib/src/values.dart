@@ -136,6 +136,8 @@ class EList extends EValue with Iterable<EValue> {
     return this;
   }
 
+  EValue get(int index) => data.getOr(index) ?? nullValue;
+
   @override
   EValue operator [](Object key) {
     String k = key.toString();
@@ -204,17 +206,17 @@ class EList extends EValue with Iterable<EValue> {
   }
 }
 
-class EString extends EValue implements Comparable<String> {
+class EText extends EValue implements Comparable<String> {
   final String data;
 
-  EString(this.data);
+  EText(this.data);
 
   @override
   EValue operator [](Object key) {
     String k = key.toString();
     if (k.contains(".")) return this.path(k);
     int index = _intKey(key);
-    return EString(data[index]);
+    return EText(data[index]);
   }
 
   @override
@@ -229,7 +231,7 @@ class EString extends EValue implements Comparable<String> {
 
   @override
   bool equal(Object? other) {
-    if (other case EString s) return data == s.data;
+    if (other case EText s) return data == s.data;
     if (other case String s) return data == s;
     return false;
   }
@@ -292,47 +294,6 @@ class ENull extends EValue {
 
 sealed class EValue {
   bool get isNull => this is ENull;
-
-  Map<String, String>? get stringMap {
-    if (this case EMap em) {
-      return em.data.map((k, v) => MapEntry(k, (v as EString).data));
-    }
-    // raise("NOT a map");
-    return null;
-  }
-
-  List<String>? get stringList {
-    if (this case EList el) {
-      return el.data.mapList((e) => (e as EString).data);
-    }
-    return null;
-    // raise("NOT a String list");
-  }
-
-  bool? get boolValue {
-    String? s = stringValue;
-    if (s != null && s.isNotEmpty) return _trues.contains(s.toLowerCase());
-    return null;
-  }
-
-  int? get intValue => stringValue?.toInt;
-
-  double? get doubleValue => stringValue?.toDouble;
-
-  String? get stringValue {
-    if (this case EString es) return es.data;
-    return null;
-  }
-
-  EList? get listValue {
-    if (this case EList ls) return ls;
-    return null;
-  }
-
-  EMap? get mapValue {
-    if (this case EMap m) return m;
-    return null;
-  }
 
   int get _estimatedSize;
 
@@ -399,9 +360,9 @@ EValue _toEValue(Object? value) {
     case null:
       return nullValue;
     case num n:
-      return EString(n.toString());
+      return EText(n.toString());
     case String s:
-      return EString(s);
+      return EText(s);
     case List<dynamic> ls:
       final el = EList();
       el.data.addAll(ls.map((e) => _toEValue(e)));

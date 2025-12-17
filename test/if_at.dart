@@ -16,10 +16,10 @@ void main() {
     """;
     EMap map = EConfig.parse(text);
     println(map.toFileContent());
-    expect(map['methods'].stringList, equals(["GET", "POST", "HEAD"]));
-    expect(map['port'].stringValue, "80");
-    expect(map['user'].stringValue, "entao");
-    expect(map['SAFE'].stringValue, "false");
+    expect(map['methods'].list?.strings, equals(["GET", "POST", "HEAD"]));
+    expect(map['port'].string, "80");
+    expect(map['user'].string, "entao");
+    expect(map['SAFE'].string, "false");
   });
   test('belong2', () {
     final String text = r"""
@@ -34,10 +34,10 @@ void main() {
     """;
     EMap map = EConfig.parse(text);
     println(map.toFileContent());
-    expect(map['methods'].stringList, equals(["GET", "POST", "HEAD"]));
-    expect(map['port'].stringValue, "433");
-    expect(map['user'].stringValue, "entao");
-    expect(map['SAFE'].stringValue, "true");
+    expect(map['methods'].list?.strings, equals(["GET", "POST", "HEAD"]));
+    expect(map['port'].string, "433");
+    expect(map['user'].string, "entao");
+    expect(map['SAFE'].string, "true");
   });
   test('contains', () {
     final String text = r"""
@@ -50,8 +50,8 @@ void main() {
     """;
     EMap map = EConfig.parse(text);
     println(map.toFileContent());
-    expect(map['methods'].stringList, equals(["GET", "POST", "HEAD"]));
-    expect(map['HAS_GET'].stringValue, "true");
+    expect(map['methods'].list?.strings, equals(["GET", "POST", "HEAD"]));
+    expect(map['HAS_GET'].string, "true");
   });
   test('contains2', () {
     final String text = r"""
@@ -64,8 +64,8 @@ void main() {
     """;
     EMap map = EConfig.parse(text);
     println(map.toFileContent());
-    expect(map['methods'].stringList, equals(["POST", "HEAD"]));
-    expect(map['HAS_GET'].stringValue, "false");
+    expect(map['methods'].list?.strings, equals(["POST", "HEAD"]));
+    expect(map['HAS_GET'].string, "false");
   });
   test('eq', () {
     final String text = r"""
@@ -78,7 +78,7 @@ void main() {
     """;
     EMap map = EConfig.parse(text);
     println(map.toFileContent());
-    expect(map['HTTP80'].stringValue, "true");
+    expect(map['HTTP80'].string, "true");
   });
   test('eq2', () {
     final String text = r"""
@@ -91,7 +91,7 @@ void main() {
     """;
     EMap map = EConfig.parse(text);
     println(map.toFileContent());
-    expect(map['HTTP8080'].stringValue, "false");
+    expect(map['HTTP8080'].string, "false");
   });
 
   test('gt', () {
@@ -105,7 +105,7 @@ void main() {
     """;
     EMap map = EConfig.parse(text);
     println(map.toFileContent());
-    expect(map['GT80'].stringValue, "false");
+    expect(map['GT80'].string, "false");
   });
   test('ge', () {
     final String text = r"""
@@ -118,7 +118,7 @@ void main() {
     """;
     EMap map = EConfig.parse(text);
     println(map.toFileContent());
-    expect(map['GE80'].stringValue, "true");
+    expect(map['GE80'].string, "true");
   });
 
   test('lt', () {
@@ -132,7 +132,7 @@ void main() {
     """;
     EMap map = EConfig.parse(text);
     println(map.toFileContent());
-    expect(map['LT80'].stringValue, "false");
+    expect(map['LT80'].string, "false");
   });
   test('le', () {
     final String text = r"""
@@ -145,7 +145,7 @@ void main() {
     """;
     EMap map = EConfig.parse(text);
     println(map.toFileContent());
-    expect(map['LE80'].stringValue, "true");
+    expect(map['LE80'].string, "true");
   });
 
   test('ne', () {
@@ -159,7 +159,7 @@ void main() {
     """;
     EMap map = EConfig.parse(text);
     println(map.toFileContent());
-    expect(map['HTTP80'].stringValue, "false");
+    expect(map['HTTP80'].string, "false");
   });
   test('ne2', () {
     final String text = r"""
@@ -172,6 +172,6 @@ void main() {
     """;
     EMap map = EConfig.parse(text);
     println(map.toFileContent());
-    expect(map['HTTP8080'].stringValue, "true");
+    expect(map['HTTP8080'].string, "true");
   });
 }
