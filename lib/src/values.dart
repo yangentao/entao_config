@@ -10,8 +10,13 @@ class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
       }
     }
   }
-  void save(File file, {Encoding encoding = utf8}){
-    EConfig.save(this , file: file, encoding: encoding);
+
+  static EMap load(File file, {Encoding encoding = utf8}) {
+    return EConfig.load(file, encoding: encoding);
+  }
+
+  void save(File file, {Encoding encoding = utf8}) {
+    EConfig.save(this, file: file, encoding: encoding);
   }
 
   @override
@@ -81,7 +86,7 @@ class EMap extends EValue with Iterable<MapEntry<String, EValue>> {
         first = false;
         if (pretty) buf.indentLine;
         buf.write(e.key);
-        buf.write(":");
+        buf.write(": ");
         e.value._serializeTo(buf, pretty: pretty);
       }
     }, indent: pretty);
