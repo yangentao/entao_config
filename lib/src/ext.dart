@@ -50,4 +50,52 @@ extension EValueExt on EValue {
   double get doubleValue => stringOpt?.let((s) => double.parse(s)) ?? 0;
 
   double? get doubleOpt => stringOpt?.let((s) => double.tryParse(s));
+
+  Map<String, T> mapValue<T>() {
+    assert(T != Object && T != dynamic);
+    if (this case EMap m) {
+      return m.data.map((k, e) => MapEntry(k, e.value<T>()));
+    }
+    return {};
+  }
+
+  List<T> listValue<T>() {
+    assert(T != Object && T != dynamic);
+    if (this case EList ls) {
+      return ls.data.mapList((e) => e.value<T>());
+    }
+    return [];
+  }
+
+  T value<T>() {
+    assert(T != Object && T != dynamic);
+    if (this case EText text) {
+      if (T == String || T == _Type.stringOpt) return text.data as T;
+      if (text.data.isNotEmpty) {
+        if (T == int || T == _Type.intOpt) {
+          if (text.data.length > 2 && text.data[1].toLowerCase() == 'x') {
+            return int.parse(text.data, radix: 16) as T;
+          }
+          return int.parse(text.data) as T;
+        }
+        if (T == double || T == _Type.doubleOpt) return double.parse(text.data) as T;
+        if (T == bool || T == _Type.boolOpt) return bool.parse(text.data, caseSensitive: false) as T;
+        if (T == Uri || T == _Type.uriOpt) return Uri.parse(text.data) as T;
+      } else {
+        if (null is T) return null as T;
+        raise("value is empty");
+      }
+    }
+    if (null is T) return null as T;
+    raise("Failed get value, type : $T, value : $this");
+  }
+}
+
+class _Type<T> {
+  final Type type = T;
+  static final Type stringOpt = _Type<String?>().type;
+  static final Type intOpt = _Type<int?>().type;
+  static final Type doubleOpt = _Type<double?>().type;
+  static final Type boolOpt = _Type<bool?>().type;
+  static final Type uriOpt = _Type<Uri?>().type;
 }

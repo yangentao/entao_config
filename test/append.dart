@@ -21,11 +21,11 @@ void main() {
     test('a', () {
       EMap map = EConfig.parse(text);
       println(map.toFileContent());
-      expect(map['methods'].list?.strings, equals(["GET", "POST", "HEAD", "PUT"]));
+      expect(map['methods'].listValue<String>(), equals(["GET", "POST", "HEAD", "PUT"]));
       expect(map['server'].list?.length, 2);
       expect(map['server'].list?[0]['host'].string, 'localhost');
       expect(map['server'].list?[1]['host'].string, 'pub.dev');
-      expect(map['nums'].list?.strings, equals(['1', '2', '3']));
+      expect(map['nums'].listValue<String>(), equals(['1', '2', '3']));
     });
   });
 }
