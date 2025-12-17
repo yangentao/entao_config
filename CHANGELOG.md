@@ -12,3 +12,5 @@
 ## 1.1.1
 * remove  using '-1' index to append element
 * add '+=' to append element
+## 1.1.2
+* fix '+=' issue.

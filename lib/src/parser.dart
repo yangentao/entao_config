@@ -314,13 +314,13 @@ class _EParser {
   }
 
   void _appendMap(EMap m, String k, Object value) {
-    EValue v = m.path(k);
-    if (v.isNull) {
-      m.setPath(k, value);
-    } else if (v is EList) {
-      v.add(value);
+    EValue old = m.path(k);
+    if (old.isNull) {
+      m.setPath(k, EList([_toEValue(value)]));
+    } else if (old is EList) {
+      old.add(value);
     } else {
-      m.setPath(k, EList([v, _toEValue(value)]));
+      m.setPath(k, EList([old, _toEValue(value)]));
     }
   }
 

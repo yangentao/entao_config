@@ -16,6 +16,7 @@ void main() {
     nums += 1
     nums += 2
     nums += 3
+    ns += 100
     """;
 
     test('a', () {
@@ -26,6 +27,7 @@ void main() {
       expect(map['server'].list?[0]['host'].string, 'localhost');
       expect(map['server'].list?[1]['host'].string, 'pub.dev');
       expect(map['nums'].listValue<String>(), equals(['1', '2', '3']));
+      expect(map['ns'].listValue<int>(), equals([100]));
     });
   });
 }
