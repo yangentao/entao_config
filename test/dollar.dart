@@ -24,7 +24,7 @@ void main() {
     empty: Empty
     $empty: @empty
     empty2: @empty
-    $methods.-1 = PUT
+    $methods += PUT
     rawstr: "@remove"
     """;
 

@@ -68,9 +68,15 @@ class _EParser {
           key = _parseKey();
       }
       ts.skipSpTab();
-      ts.expectAnyChar(_ASSIGN);
+      bool isAppend = false;
+      if (ts.tryExpectChar(CharCode.PLUS)) {
+        ts.expectChar(CharCode.EQUAL);
+        isAppend = true;
+      } else {
+        ts.expectAnyChar(_ASSIGN);
+      }
       dynamic v = _parseValue();
-      _assignMap(map, key, v);
+      _assignMap(map, key, v, append: isAppend);
       List<int> trails = ts.skipChars(_WHITE_COMMA);
       if (!_isObjectEnd(root)) {
         if (trails.intersect(_LN_COMMA).isEmpty) _raise();
@@ -282,30 +288,45 @@ class _EParser {
     }
   }
 
-  void _assignMap(EMap emap, String key, dynamic value) {
+  void _assignMap(EMap emap, String key, dynamic value, {bool append = false}) {
     // println("assign, ", key, value);
     String firstChar = key[0];
     if (firstChar == "@") {
       if (key == _AT_INCLUDE) {
+        if (append) _raise("Plug assign do not effect on include");
         _include(emap, key, value is EText ? value.data : value);
       }
       return;
     }
     String newKey = firstChar == r"$" ? key.substring(1) : key;
-    switch (value) {
-      case _AT_NULL:
-        emap.setPath(newKey, nullValue);
-      case _AT_EMPTY:
-        emap.setPath(newKey, "");
-      case _AT_REMOVE:
-        emap.removePath(newKey);
-      default:
-        emap.setPath(newKey, value);
+    if (value == _AT_REMOVE) {
+      if (append) _raise("Plug assign do not effect on remove");
+      emap.removePath(newKey);
+      return;
+    }
+    if (value == _AT_NULL) value = nullValue;
+    if (value == _AT_EMPTY) value = '';
+    if (append) {
+      _appendMap(emap, newKey, value);
+    } else {
+      emap.setPath(newKey, value);
     }
   }
 
+  void _appendMap(EMap m, String k, Object value) {
+    EValue v = m.path(k);
+    if (v.isNull) {
+      m.setPath(k, value);
+    } else if (v is EList) {
+      v.add(value);
+    } else {
+      m.setPath(k, EList([v, _toEValue(value)]));
+    }
+  }
+
+  // $methods.-1 = PUT
   String _parseKey() {
-    List<int> charList = ts.moveNext(acceptor: (e) => CharCode.isIdent(e) || e == CharCode.DOT || e == CharCode.DOLLAR || e == CharCode.AT || e == CharCode.MINUS);
+    List<int> charList = ts.moveNext(acceptor: (e) => CharCode.isIdent(e) || e == CharCode.DOT || e == CharCode.DOLLAR || e == CharCode.AT);
     if (charList.isEmpty) _raise();
     return String.fromCharCodes(charList);
   }

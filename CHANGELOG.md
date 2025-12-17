@@ -8,3 +8,7 @@
 
 ## 1.1.0
 * xxxValue, intValue, boolValue...
+
+## 1.1.1
+* remove  using '-1' index to append element
+* add '+=' to append element

@@ -52,6 +52,19 @@ methods:[
     PUT
 ]
 ```
+
+* Append
+```
+methods: [GET,POST]
+methods += PUT
+server:{
+    host: localhost
+}
+server += {
+    host: pub.dev
+}
+```
+
 * Comment
 ```
 # comment
@@ -78,7 +91,7 @@ $user.addr: @remove     # remove key 'addr'
 days:[1,2,3]
 $days.0 = 999       # days[0] = 999
 $days.3 = 4         # days[3] = 4,  allow assign value at end index.
-$days.-1 = 6        # days.append(6)
+$days += 6        # days.append(6)
 $days.0: @remove    # days.removeAt(0)
 ```
 * Include

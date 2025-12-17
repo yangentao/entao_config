@@ -1,6 +1,6 @@
 name: entao_config
 description: dart config file with struct formats.
-version: 1.1.0
+version: 1.1.1
 repository: https://github.com/yangentao/entao_config
 homepage: https://github.com/yangentao/entao_config
 
